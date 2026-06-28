@@ -157,10 +157,15 @@ uv run python research.py gemini # live Gemini brain (needs GEMINI_API_KEY in .e
 uv run python ablation.py       # the ablation proof
 uv run python holdout.py        # the sealed holdout
 
-# 3. Backend API  →  http://localhost:8000
+# 3. 5-minute provider ingest, when you have credentials
+# Polygon: POLYGON_API_KEY=...
+# Alpaca:  ALPACA_API_KEY=... ALPACA_SECRET_KEY=...
+uv run python ingest_5m.py --provider polygon --symbols AAPL,MSFT,NVDA --start 2024-01-02 --end 2024-01-31 --universe sp500_current
+
+# 4. Backend API  →  http://localhost:8000
 uv run uvicorn api:app --port 8000
 
-# 4. Dashboard    →  http://localhost:3000
+# 5. Dashboard    →  http://localhost:3000
 cd frontend && npm install && npm run dev
 ```
 

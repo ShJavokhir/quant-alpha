@@ -9,8 +9,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, time, timezone
 import json
+import os
 from pathlib import Path
-from typing import Iterable
+from typing import Callable, Iterable
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -46,6 +50,31 @@ class BarPanel5m:
         return list(self.close.columns)
 
 
+class ProviderError(RuntimeError):
+    """Raised when a market data provider request cannot be completed."""
+
+
+Transport = Callable[[str, dict[str, str] | None, int], dict]
+
+
+def _json_get(url: str, headers: dict[str, str] | None = None, timeout: int = 30) -> dict:
+    req = Request(url, headers=headers or {})
+    try:
+        with urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        raise ProviderError(f"provider HTTP {exc.code}: {body[:300]}") from exc
+    except URLError as exc:
+        raise ProviderError(f"provider request failed: {exc.reason}") from exc
+    except json.JSONDecodeError as exc:
+        raise ProviderError("provider returned invalid JSON") from exc
+
+
+def _credential(value: str | None, env_name: str) -> str | None:
+    return value or os.getenv(env_name)
+
+
 class MarketDataProvider:
     """Interface for provider adapters."""
 
@@ -56,20 +85,106 @@ class MarketDataProvider:
 
 
 class PolygonProvider(MarketDataProvider):
-    """Placeholder adapter boundary for Polygon/Massive.
-
-    The backend can be tested without network credentials. A production adapter
-    should fetch /v2/aggs/ticker/{ticker}/range/5/minute/{from}/{to}, then call
-    normalize_polygon_aggs per symbol.
-    """
+    """Polygon/Massive 5-minute aggregate adapter."""
 
     name = "polygon"
 
+    def __init__(
+        self,
+        api_key: str | None = None,
+        base_url: str = "https://api.polygon.io",
+        timeout: int = 30,
+        transport: Transport | None = None,
+    ) -> None:
+        self.api_key = _credential(api_key, "POLYGON_API_KEY")
+        self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
+        self.transport = transport or _json_get
+
+    def fetch_5m_bars(self, symbols: list[str], start: str, end: str, adjusted: bool = True) -> pd.DataFrame:
+        if not self.api_key:
+            raise ProviderError("POLYGON_API_KEY is required for Polygon ingestion")
+        frames = []
+        for symbol in symbols:
+            ticker = symbol.upper()
+            params = urlencode({
+                "adjusted": str(bool(adjusted)).lower(),
+                "sort": "asc",
+                "limit": 50000,
+                "apiKey": self.api_key,
+            })
+            url = f"{self.base_url}/v2/aggs/ticker/{ticker}/range/5/minute/{start}/{end}?{params}"
+            payload = self.transport(url, None, self.timeout)
+            rows = payload.get("results") or []
+            if rows:
+                frames.append(normalize_polygon_aggs(ticker, rows, adjusted))
+        if not frames:
+            return validate_bars(pd.DataFrame(columns=BAR_COLUMNS))
+        return validate_bars(pd.concat(frames, ignore_index=True))
+
 
 class AlpacaProvider(MarketDataProvider):
-    """Placeholder adapter boundary for Alpaca market data."""
+    """Alpaca market data 5-minute bar adapter."""
 
     name = "alpaca"
+
+    def __init__(
+        self,
+        api_key: str | None = None,
+        secret_key: str | None = None,
+        base_url: str = "https://data.alpaca.markets",
+        feed: str | None = None,
+        timeout: int = 30,
+        transport: Transport | None = None,
+    ) -> None:
+        self.api_key = _credential(api_key, "ALPACA_API_KEY") or _credential(None, "APCA_API_KEY_ID")
+        self.secret_key = _credential(secret_key, "ALPACA_SECRET_KEY") or _credential(None, "APCA_API_SECRET_KEY")
+        self.base_url = base_url.rstrip("/")
+        self.feed = feed or os.getenv("ALPACA_DATA_FEED")
+        self.timeout = timeout
+        self.transport = transport or _json_get
+
+    def fetch_5m_bars(self, symbols: list[str], start: str, end: str, adjusted: bool = True) -> pd.DataFrame:
+        if not self.api_key or not self.secret_key:
+            raise ProviderError("ALPACA_API_KEY and ALPACA_SECRET_KEY are required for Alpaca ingestion")
+        headers = {"APCA-API-KEY-ID": self.api_key, "APCA-API-SECRET-KEY": self.secret_key}
+        params = {
+            "symbols": ",".join(s.upper() for s in symbols),
+            "timeframe": "5Min",
+            "start": start,
+            "end": end,
+            "adjustment": "all" if adjusted else "raw",
+            "limit": 10000,
+        }
+        if self.feed:
+            params["feed"] = self.feed
+        frames = []
+        page_token = None
+        while True:
+            q = dict(params)
+            if page_token:
+                q["page_token"] = page_token
+            url = f"{self.base_url}/v2/stocks/bars?{urlencode(q)}"
+            payload = self.transport(url, headers, self.timeout)
+            bars_by_symbol = payload.get("bars") or {}
+            for symbol, rows in bars_by_symbol.items():
+                if rows:
+                    frames.append(normalize_alpaca_bars(symbol, rows, adjusted))
+            page_token = payload.get("next_page_token")
+            if not page_token:
+                break
+        if not frames:
+            return validate_bars(pd.DataFrame(columns=BAR_COLUMNS))
+        return validate_bars(pd.concat(frames, ignore_index=True))
+
+
+def get_provider(name: str, **kwargs) -> MarketDataProvider:
+    provider = name.lower()
+    if provider == "polygon":
+        return PolygonProvider(**kwargs)
+    if provider == "alpaca":
+        return AlpacaProvider(**kwargs)
+    raise ValueError(f"unsupported 5m provider: {name}")
 
 
 def _to_utc_timestamp(value) -> pd.Timestamp:
@@ -213,6 +328,45 @@ def write_manifest(cache_root: Path | str, provider: str, manifest: dict) -> Pat
     out = root / "manifest.json"
     out.write_text(json.dumps(payload, indent=2, sort_keys=True))
     return out
+
+
+def ingest_5m_bars(
+    provider: MarketDataProvider,
+    symbols: list[str],
+    start: str,
+    end: str,
+    cache_root: Path | str,
+    adjusted: bool = True,
+    universe: str = "custom",
+    regular_session_only: bool = True,
+) -> dict:
+    requested = [s.upper() for s in symbols]
+    bars = provider.fetch_5m_bars(requested, start, end, adjusted=adjusted)
+    bars = filter_regular_session(bars) if regular_session_only else validate_bars(bars)
+    written = write_bar_cache(bars, cache_root, provider.name)
+    found = sorted(bars["symbol"].unique()) if not bars.empty else []
+    missing = sorted(set(requested) - set(found))
+    manifest = {
+        "provider": provider.name,
+        "universe": universe,
+        "symbols_requested": requested,
+        "symbols_found": found,
+        "missing_symbols": missing,
+        "start": start,
+        "end": end,
+        "bar_interval": "5m",
+        "regular_session_only": regular_session_only,
+        "session": "09:30-16:00 America/New_York" if regular_session_only else "provider_raw",
+        "adjusted": bool(adjusted),
+        "rows": int(len(bars)),
+        "cache_files": [str(p) for p in written],
+        "ingested_at": datetime.now(timezone.utc).isoformat(),
+        "survivorship_warning": "V1 uses the requested static universe; current S&P 500 constituent runs are survivor-biased.",
+    }
+    manifest_path = write_manifest(cache_root, provider.name, manifest)
+    return {**manifest, "manifest_path": str(manifest_path)}
+
+
 
 
 def read_manifest(cache_root: Path | str, provider: str) -> dict:

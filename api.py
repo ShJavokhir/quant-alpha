@@ -27,7 +27,7 @@ from backtest_5m import (
     run_portfolio_backtest_5m,
 )
 from factors_5m import evaluate_factor, list_factors as list_factors_5m
-from market_data_5m import bars_to_panel, read_bar_cache, read_manifest
+from market_data_5m import ProviderError, bars_to_panel, get_provider, ingest_5m_bars, read_bar_cache, read_manifest
 from portfolio_5m import PortfolioConfig5m, weights_from_scores
 
 ROOT = Path(__file__).parent
@@ -238,6 +238,16 @@ class Backtest5mRequest(BaseModel):
     slippage_bps: float = 3.0
 
 
+class Ingest5mRequest(BaseModel):
+    provider: str = "polygon"
+    symbols: list[str]
+    start: str
+    end: str
+    adjusted: bool = True
+    universe: str = "custom"
+    regular_session_only: bool = True
+
+
 def _clean(v):
     if isinstance(v, (pd.Timestamp, datetime)):
         return v.isoformat()
@@ -275,6 +285,28 @@ def _read_backtest_5m_artifact(run_id: str, name: str):
     if not p.exists():
         raise HTTPException(404, f"no {name} for 5m backtest {run_id}")
     return json.loads(p.read_text())
+
+
+@app.post("/api/market-data/5m/ingest")
+def ingest_market_data_5m(req: Ingest5mRequest):
+    if not req.symbols:
+        raise HTTPException(422, "symbols are required")
+    try:
+        provider = get_provider(req.provider)
+        return ingest_5m_bars(
+            provider=provider,
+            symbols=req.symbols,
+            start=req.start,
+            end=req.end,
+            cache_root=DATA_DIR / "cache",
+            adjusted=req.adjusted,
+            universe=req.universe,
+            regular_session_only=req.regular_session_only,
+        )
+    except ProviderError as exc:
+        raise HTTPException(502, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
 
 
 @app.get("/api/factors/5m")
