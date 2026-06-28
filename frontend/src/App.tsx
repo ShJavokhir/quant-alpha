@@ -5,6 +5,7 @@ import Header from "./components/Header";
 import Hero from "./components/Hero";
 import TimelineScrubber from "./components/TimelineScrubber";
 import LiveSimDeck from "./components/LiveSimDeck";
+import AlphaReplay from "./components/AlphaReplay";
 import FleetViz from "./components/FleetViz";
 import ResearchFeed from "./components/ResearchFeed";
 import ImprovementChart from "./components/ImprovementChart";
@@ -20,6 +21,14 @@ export default function App() {
   const [gen, setGen] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [alpha, setAlpha] = useState<string | null>(null);
+  const [replayAlpha, setReplayAlpha] = useState<string | null>(null);
+
+  const replayWith = (name: string) => {
+    setReplayAlpha(name);
+    setAlpha(null);
+    requestAnimationFrame(() =>
+      document.getElementById("replay")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
 
   useEffect(() => {
     loadRun().then((r) => {
@@ -36,7 +45,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <Header meta={run.meta} />
+      <Header run={run} />
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 pb-24 space-y-6">
         <Hero run={run} />
 
@@ -54,8 +63,14 @@ export default function App() {
           </div>
         </section>
 
+        <section id="replay" className="space-y-3 scroll-mt-6">
+          <SectionLabel n="02" title="Replay any strategy"
+            sub="Pick an alpha, set a deposit, and watch it trade: a real equity curve from your stake, with the book's long/short entries marked on a representative name. Click ▶ to replay." />
+          <AlphaReplay run={run} selected={replayAlpha} onSelect={setReplayAlpha} />
+        </section>
+
         <section className="space-y-3">
-          <SectionLabel n="02" title="Proof it's improving"
+          <SectionLabel n="03" title="Proof it's improving"
             sub="Two honest, controlled views: the fleet adapts out-of-sample, and the researcher itself learns." />
           <div className="grid lg:grid-cols-2 gap-6">
             <ImprovementChart run={run} />
@@ -64,7 +79,7 @@ export default function App() {
         </section>
 
         <section className="space-y-3">
-          <SectionLabel n="03" title="See it research — live"
+          <SectionLabel n="04" title="See it research — live"
             sub="Two ways to watch the agent work in real time: instant Gemini proposals, and the Antigravity managed agent researching in an isolated environment." />
           <div className="grid lg:grid-cols-2 gap-6">
             <AntigravityLab />
@@ -73,7 +88,7 @@ export default function App() {
         </section>
 
         <section className="space-y-3">
-          <SectionLabel n="04" title="Why you can trust it"
+          <SectionLabel n="05" title="Why you can trust it"
             sub="Engineered against the ways backtests fool you." />
           <HonestyPanel run={run} />
         </section>
@@ -84,7 +99,7 @@ export default function App() {
         {run.meta.timeline.first}–{run.meta.timeline.last} · research demo, not investment advice
       </footer>
 
-      <AlphaModal name={alpha} onClose={() => setAlpha(null)} />
+      <AlphaModal name={alpha} onClose={() => setAlpha(null)} onReplay={replayWith} />
     </div>
   );
 }

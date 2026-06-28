@@ -103,9 +103,11 @@ function Metric({ label, value }: { label: string; value: string }) {
 export default function AlphaModal({
   name,
   onClose,
+  onReplay,
 }: {
   name: string | null;
   onClose: () => void;
+  onReplay?: (name: string) => void;
 }) {
   const [data, setData] = useState<AlphaDetail | null>(null);
   const [loading, setLoading] = useState(false);
@@ -186,14 +188,25 @@ export default function AlphaModal({
               </span>
             )}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-faint hover:text-ink transition-colors text-xl leading-none shrink-0"
-            aria-label="Close"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {onReplay && (
+              <button
+                type="button"
+                onClick={() => onReplay(name)}
+                className="px-3 py-1.5 rounded-lg bg-cyan/15 text-cyan text-xs font-medium hover:bg-cyan/25 transition glow-cyan"
+              >
+                ▶ Replay strategy
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-faint hover:text-ink transition-colors text-xl leading-none"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         {loading && (

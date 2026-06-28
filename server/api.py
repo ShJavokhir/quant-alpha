@@ -124,6 +124,99 @@ def alpha_detail(name: str, run_id: str | None = None):
             "cum_ic": [{"date": str(d.date()), "v": float(v)} for d, v in icc.items()]}
 
 
+_REPLAY_CACHE: dict = {}
+
+
+def _episodes(pct_col, thr=0.9, mink=5):
+    """Conviction holds: runs of >= mink consecutive days where the name sits in the
+    top decile (dir +1, long) or bottom decile (dir -1, short) of the cross-section.
+    Returns [(dir, start_idx, end_idx)] as integer positions into the date axis."""
+    s = pct_col.to_numpy()
+    state = np.where(s >= thr, 1, np.where(s <= 1 - thr, -1, 0))
+    eps, cur, start = [], 0, None
+    for i, v in enumerate(state):
+        if v != cur:
+            if cur != 0 and start is not None and (i - 1 - start) >= mink - 1:
+                eps.append((int(cur), int(start), int(i - 1)))
+            cur, start = int(v), (i if v != 0 else None)
+    if cur != 0 and start is not None and (len(state) - 1 - start) >= mink - 1:
+        eps.append((int(cur), int(start), len(state) - 1))
+    return eps
+
+
+def _replay_compute(run, name):
+    """Heavy part (eval formula -> book pnl/turnover + per-name decile ranks), cached."""
+    if name in _REPLAY_CACHE:
+        return _REPLAY_CACHE[name]
+    lut = _formula_lookup(run)
+    if name not in lut:
+        raise HTTPException(404, f"unknown alpha {name}")
+    info = lut[name]
+    panel = _panel_for(run)
+    try:
+        sig = dsl.evaluate(info["formula"], panel)
+    except dsl.DSLError as e:
+        raise HTTPException(400, str(e))
+    m = backtest.evaluate_signal(sig, panel, with_series=True,
+                                 cost_bps=run["meta"]["config"]["cost_bps"])
+    s = m.pop("_series")
+    w = s["weights"]
+    pnl = s["pnl"].reindex(sig.index).fillna(0.0)
+    turn = w.diff().abs().sum(axis=1).reindex(sig.index).fillna(0.0)
+    fwd = panel["fwd"].reindex(index=sig.index, columns=sig.columns)
+    contrib = (w * fwd).sum().fillna(0.0)
+    pct = sig.rank(axis=1, pct=True)
+
+    # representative names: clean conviction story (3..60 episodes) ranked by P&L impact
+    cands = []
+    for nm in contrib.abs().sort_values(ascending=False).index:
+        if nm not in pct.columns:
+            continue
+        ne = len(_episodes(pct[nm]))
+        if 3 <= ne <= 60:
+            cands.append({"symbol": nm, "contrib": round(float(contrib[nm]), 4), "episodes": ne})
+        if len(cands) >= 14:
+            break
+    cands.sort(key=lambda c: -c["contrib"])  # most profitable name first -> nice default
+
+    cache = {
+        "info": {k: info.get(k) for k in ("formula", "family", "rationale", "source",
+                                          "source_url", "source_title")},
+        "dates": [str(d.date()) for d in sig.index],
+        "pnl": [round(float(x), 6) for x in pnl],
+        "turn": [round(float(x), 6) for x in turn],
+        "metrics": {k: m[k] for k in m if not k.startswith("_")},
+        "candidates": cands,
+        "_close": panel["close"], "_pct": pct, "_idx": sig.index,
+    }
+    if len(_REPLAY_CACHE) > 6:
+        _REPLAY_CACHE.clear()
+    _REPLAY_CACHE[name] = cache
+    return cache
+
+
+@app.get("/api/alpha_replay/{name}")
+def alpha_replay(name: str, symbol: str | None = None, run_id: str | None = None):
+    """Replay a single alpha as a tradeable strategy: the dollar-neutral book's daily
+    gross P&L + turnover (so the client can apply any deposit/cost instantly), plus one
+    representative name's price with the alpha's conviction long/short episodes -> ▲/▼
+    buy/sell markers. Powers the Strategy Replay view."""
+    run, _ = _load_run(run_id)
+    c = _replay_compute(run, name)
+    sym = symbol or (c["candidates"][0]["symbol"] if c["candidates"] else None)
+    series = {"symbol": sym, "price": [], "episodes": []}
+    if sym is not None and sym in c["_close"].columns:
+        price = c["_close"][sym].reindex(c["_idx"])
+        series["price"] = [None if pd.isna(x) else round(float(x), 2) for x in price]
+        if sym in c["_pct"].columns:
+            series["episodes"] = [{"dir": d, "start": a, "end": b}
+                                  for (d, a, b) in _episodes(c["_pct"][sym])]
+    return {"name": name, "info": c["info"], "dates": c["dates"],
+            "pnl": c["pnl"], "turn": c["turn"], "metrics": c["metrics"],
+            "candidates": c["candidates"], "series": series,
+            "cost_bps_default": run["meta"]["config"]["cost_bps"]}
+
+
 @app.get("/api/similar/{name}")
 def similar(name: str, run_id: str | None = None):
     """Atlas Vector Search (Voyage embeddings) — alphas the agent has tried that are

@@ -1,10 +1,83 @@
 import type { RunData } from "../types";
 
-export default function Header({ meta }: { meta: RunData["meta"] }) {
-  const memLabel = meta.memory_backend?.toLowerCase().includes("mongo")
-    ? "MongoDB Atlas"
-    : "Local vector store";
-  const range = `${meta.timeline.first.slice(0, 4)}–${meta.timeline.last.slice(0, 4)}`;
+interface Sponsor {
+  name: string;
+  sub: string;
+  color: string; // brand accent
+  live: boolean; // genuinely exercised in this run
+  title: string;
+  show: string; // responsive visibility class
+}
+
+function buildStack(run: RunData): Sponsor[] {
+  const src = new Set(run.proposals.map((p) => p.source));
+  const usedAntigravity =
+    src.has("antigravity") ||
+    run.generations.some((g) => g.births.some((b) => b.interaction_id));
+  const onMongo = !!run.meta.memory_backend?.toLowerCase().includes("mongo");
+
+  return [
+    {
+      name: "Gemini",
+      sub: "proposer",
+      color: "var(--color-sky)",
+      live: src.has("gemini"),
+      title: "Google Gemini — proposes new alpha formulas in the DSL",
+      show: "hidden sm:inline-flex",
+    },
+    {
+      name: "Antigravity",
+      sub: "managed agent",
+      color: "var(--color-violet)",
+      live: usedAntigravity,
+      title:
+        "Gemini Antigravity managed agent — browses quant literature in a hosted sandbox and returns citable alphas",
+      show: "hidden md:inline-flex",
+    },
+    {
+      name: "Voyage",
+      sub: "embeddings",
+      color: "var(--color-pink)",
+      live: true,
+      title: "Voyage AI embeddings — vectorize alphas for memory retrieval & dedup",
+      show: "hidden lg:inline-flex",
+    },
+    {
+      name: "MongoDB Atlas",
+      sub: onMongo ? "$vectorSearch" : "local mirror",
+      color: onMongo ? "var(--color-emerald)" : "var(--color-amber)",
+      live: onMongo,
+      title: onMongo
+        ? "MongoDB Atlas Vector Search — agent memory store"
+        : "MongoDB Atlas is wired in; this replay used the offline local vector mirror",
+      show: "hidden lg:inline-flex",
+    },
+  ];
+}
+
+function StackBadge({ s }: { s: Sponsor }) {
+  return (
+    <span className={`chip ${s.show}`} title={s.title}>
+      <span className="relative flex h-1.5 w-1.5">
+        {s.live && (
+          <span
+            className="animate-pulse-ring absolute inline-flex h-full w-full rounded-full"
+            style={{ background: s.color }}
+          />
+        )}
+        <span
+          className="relative inline-flex h-1.5 w-1.5 rounded-full"
+          style={{ background: s.color, opacity: s.live ? 1 : 0.7 }}
+        />
+      </span>
+      <span style={{ color: s.live ? s.color : "var(--color-muted)" }}>{s.name}</span>
+      <span className="text-faint hidden xl:inline">{s.sub}</span>
+    </span>
+  );
+}
+
+export default function Header({ run }: { run: RunData }) {
+  const stack = buildStack(run);
 
   return (
     <header className="sticky top-0 z-40 backdrop-blur-xl bg-bg/70 border-b border-border">
@@ -33,18 +106,11 @@ export default function Header({ meta }: { meta: RunData["meta"] }) {
           </span>
         </div>
 
-        {/* Meta chips */}
+        {/* Tech-stack status badges */}
         <div className="flex items-center gap-2">
-          <span className="chip hidden sm:inline-flex">{meta.n_stocks} stocks</span>
-          <span className="chip hidden md:inline-flex font-mono">{range}</span>
-          <span className="chip hidden lg:inline-flex text-muted">{memLabel}</span>
-          <span className="chip hidden lg:inline-flex text-violet">🛰 Antigravity</span>
-          <a
-            href="#honesty"
-            className="chip text-cyan hover:bg-cyan/10 transition-colors"
-          >
-            Methodology
-          </a>
+          {stack.map((s) => (
+            <StackBadge key={s.name} s={s} />
+          ))}
         </div>
       </div>
     </header>
