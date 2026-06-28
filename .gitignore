@@ -14,3 +14,10 @@ frontend/.next/
 runs/*
 !runs/demo_committed/
 !runs/factor_5m_demo/
+
+# generated data / caches (regenerable via lab/data/build_panels.py + download_ext.py)
+lab/data/*.pkl
+lab/data/embed_cache.json
+lab/data/raw/
+lab/data/raw_ext/
+*.log

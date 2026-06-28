@@ -1,0 +1,171 @@
+{
+  "price_momentum_12_1": {
+    "name": "price_momentum_12_1",
+    "family": "momentum",
+    "formula": "rank(delay(close, 21) / delay(close, 252) - 1)",
+    "rationale": "Stocks that have outperformed over the past year tend to keep outperforming over the next few months as investors underreact to information; the most recent month is skipped to avoid short-term reversal contamination.",
+    "source_title": "Returns to Buying Winners and Selling Losers: Implications for Stock Market Efficiency (Jegadeesh & Titman, 1993)",
+    "source_url": "https://www.bauer.uh.edu/rsusmel/phd/jegadeesh-titman93.pdf",
+    "valid": true
+  },
+  "high_52week_proximity": {
+    "name": "high_52week_proximity",
+    "family": "momentum",
+    "formula": "rank(close / ts_max(high, 252))",
+    "rationale": "Nearness to the 52-week high acts as an anchor: when a stock approaches its yearly high, traders are reluctant to bid it higher, causing underreaction, so stocks near their highs subsequently outperform those far below.",
+    "source_title": "The 52-Week High and Momentum Investing (George & Hwang, 2004)",
+    "source_url": "https://www.bauer.uh.edu/tgeorge/papers/gh4-paper.pdf",
+    "valid": true
+  },
+  "moving_average_trend": {
+    "name": "moving_average_trend",
+    "family": "momentum",
+    "formula": "rank((sma(close, 50) - sma(close, 200)) / close)",
+    "rationale": "Simple trend-following rules (price above a long moving average) capture persistent drift; stocks in established uptrends tend to continue, a relationship documented across decades of index data.",
+    "source_title": "Simple Technical Trading Rules and the Stochastic Properties of Stock Returns (Brock, Lakonishok & LeBaron, 1992)",
+    "source_url": "https://www.kevinsheppard.com/files/teaching/mfe/advanced-econometrics/Brock_Lakonishok_LeBaron.pdf",
+    "valid": true
+  },
+  "short_term_reversal": {
+    "name": "short_term_reversal",
+    "family": "reversal",
+    "formula": "-1 * rank(close / delay(close, 21) - 1)",
+    "rationale": "Over short horizons (about one month) individual stock returns exhibit negative serial correlation, partly from liquidity provision and overreaction, so last month's losers tend to bounce and winners tend to give back gains.",
+    "source_title": "Evidence of Predictable Behavior of Security Returns (Jegadeesh, 1990)",
+    "source_url": "https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1540-6261.1990.tb05110.x",
+    "valid": true
+  },
+  "residual_reversal": {
+    "name": "residual_reversal",
+    "family": "reversal",
+    "formula": null,
+    "rationale": "Reversal is far stronger when measured on the portion of returns unrelated to common factors: the idiosyncratic (residual) component reverses because it largely reflects temporary, non-fundamental price pressure rather than news.",
+    "source_title": "A Closer Look at the Short-Term Return Reversal (Da, Liu & Schaumburg)",
+    "source_url": "https://academicweb.nd.edu/~zda/Reversal.pdf"
+  },
+  "weekly_max_reversal": {
+    "name": "weekly_max_reversal",
+    "family": "reversal",
+    "formula": null,
+    "rationale": "Short-term reversal is concentrated in stocks that recently printed extreme single-day gains (lottery-like spikes); such stocks are overbought by attention-driven traders and subsequently reverse hard at the weekly horizon.",
+    "source_title": "Maxing Out Short-term Reversals in Weekly Stock Returns (Journal of Empirical Finance, 2025)",
+    "source_url": "https://www.sciencedirect.com/science/article/abs/pii/S0927539825000301"
+  },
+  "amihud_illiquidity": {
+    "name": "amihud_illiquidity",
+    "family": "volume",
+    "formula": null,
+    "rationale": "Illiquid stocks, where a given dollar of trading moves the price more, command a return premium as compensation for higher trading costs and price-impact risk.",
+    "source_title": "Illiquidity and Stock Returns: Cross-Section and Time-Series Effects (Amihud, 2002)",
+    "source_url": "https://www.cis.upenn.edu/~mkearns/finread/amihud.pdf"
+  },
+  "liquidity_dollar_volume": {
+    "name": "liquidity_dollar_volume",
+    "family": "volume",
+    "formula": "-1 * rank(log(sma(close * volume, 60)))",
+    "rationale": "Trading activity proxies for liquidity: more liquid, heavily traded stocks earn lower expected returns, so low-liquidity names carry a premium. With only OHLCV available, average daily dollar volume is the natural liquidity proxy for the turnover effect.",
+    "source_title": "Liquidity and Stock Returns: An Alternative Test (Datar, Naik & Radcliffe, 1998)",
+    "source_url": "https://www.sciencedirect.com/science/article/abs/pii/S1386418197000049",
+    "valid": true
+  },
+  "abnormal_volume": {
+    "name": "abnormal_volume",
+    "family": "volume",
+    "formula": "rank(adv(5) / adv(60))",
+    "rationale": "Spikes in trading volume relative to a stock's own norm signal shifts in investor attention and information flow; abnormal volume predicts the cross-section of subsequent returns beyond past-return effects.",
+    "source_title": "Abnormal Trading Volume and the Cross-Section of Stock Returns (EFMA, 2016)",
+    "source_url": "https://efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2016-Switzerland/papers/EFMA2016_0415_fullpaper.pdf",
+    "valid": true
+  },
+  "volume_price_trend": {
+    "name": "volume_price_trend",
+    "family": "volume",
+    "formula": null,
+    "rationale": "Volume confirms price: accumulating signed volume (volume attributed in the direction of the day's price change) reveals underlying buying or selling pressure before it is fully reflected in price.",
+    "source_title": "Volume Price Trend Indicator (VPT) / On-Balance Volume - Investopedia reference",
+    "source_url": "https://www.investopedia.com/terms/v/vptindicator.asp"
+  },
+  "idiosyncratic_vol": {
+    "name": "idiosyncratic_vol",
+    "family": "volatility",
+    "formula": null,
+    "rationale": "Stocks with high idiosyncratic (firm-specific) volatility earn abnormally low future returns, an anomaly often attributed to mispricing, lottery preferences, and limits to arbitrage.",
+    "source_title": "The Cross-Section of Volatility and Expected Returns (Ang, Hodrick, Xing & Zhang, 2006)",
+    "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=681343"
+  },
+  "low_total_vol": {
+    "name": "low_total_vol",
+    "family": "volatility",
+    "formula": "rank(-1 * stddev(returns, 252))",
+    "rationale": "The low-volatility anomaly: stocks with low total return volatility deliver higher risk-adjusted returns than high-volatility stocks, contradicting the textbook risk-return tradeoff.",
+    "source_title": "The Volatility Effect: Lower Risk Without Lower Return (Blitz & van Vliet, 2007)",
+    "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=980865",
+    "valid": true
+  },
+  "max_lottery": {
+    "name": "max_lottery",
+    "family": "volatility",
+    "formula": "-1 * rank(ts_max(returns, 20))",
+    "rationale": "Investors overpay for lottery-like stocks with extreme recent single-day upside, pushing their prices too high; these high-MAX stocks subsequently underperform.",
+    "source_title": "Maxing Out: Stocks as Lotteries and the Cross-Section of Expected Returns (Bali, Cakici & Whitelaw, 2011)",
+    "source_url": "https://pages.stern.nyu.edu/~rwhitela/papers/max%20jfe11.pdf",
+    "valid": true
+  },
+  "corwin_schultz_spread": {
+    "name": "corwin_schultz_spread",
+    "family": "microstructure",
+    "formula": null,
+    "rationale": "Daily high prices are typically buyer-initiated and lows seller-initiated, so the ratio of high to low embeds the bid-ask spread; wider implied spreads proxy illiquidity and command a return premium.",
+    "source_title": "A Simple Way to Estimate Bid-Ask Spreads from Daily High and Low Prices (Corwin & Schultz, 2012)",
+    "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1106193"
+  },
+  "roll_effective_spread": {
+    "name": "roll_effective_spread",
+    "family": "microstructure",
+    "formula": null,
+    "rationale": "In an efficient market the bid-ask bounce induces negative serial covariance in successive price changes; the magnitude of that covariance implies the effective spread, a liquidity/transaction-cost proxy that is priced in the cross-section.",
+    "source_title": "A Simple Implicit Measure of the Effective Bid-Ask Spread in an Efficient Market (Roll, 1984)",
+    "source_url": "https://www.bauer.uh.edu/rsusmel/phd/roll1984.pdf"
+  },
+  "overnight_intraday": {
+    "name": "overnight_intraday",
+    "family": "microstructure",
+    "formula": "rank(sma(open / delay(close, 1) - 1, 10))",
+    "rationale": "Anomaly returns accrue very differently overnight versus intraday: overnight (close-to-open) returns are dominated by retail/sentiment-driven demand and persist, while intraday returns behave differently, so decomposing the two predicts the cross-section.",
+    "source_title": "The Cross-Section of Intraday and Overnight Returns (Bogousslavsky, 2021)",
+    "source_url": "https://www.sciencedirect.com/science/article/abs/pii/S0304405X21000854",
+    "valid": true
+  },
+  "intraday_close_strength": {
+    "name": "intraday_close_strength",
+    "family": "microstructure",
+    "formula": null,
+    "rationale": "The position of the close within the day's high-low range, and the close-versus-open move, capture intraday demand pressure; this is the basis of several short-horizon formulaic alphas built purely from OHLC bars.",
+    "source_title": "101 Formulaic Alphas (Kakushadze, 2016)",
+    "source_url": "https://arxiv.org/abs/1601.00991"
+  },
+  "long_term_reversal": {
+    "name": "long_term_reversal",
+    "family": "value",
+    "formula": null,
+    "rationale": "Over multi-year horizons investors overreact to sustained good or bad news, so past long-run losers (which become cheap/value-like) outperform past long-run winners as prices mean-revert toward fundamentals.",
+    "source_title": "Does the Stock Market Overreact? (De Bondt & Thaler, 1985)",
+    "source_url": "https://onlinelibrary.wiley.com/doi/10.1111/j.1540-6261.1985.tb05004.x"
+  },
+  "month_of_year_seasonality": {
+    "name": "month_of_year_seasonality",
+    "family": "seasonality",
+    "formula": null,
+    "rationale": "Stocks that historically earn relatively high returns in a given calendar month tend to keep earning high returns in that same month for years, a persistent cross-sectional seasonal pattern.",
+    "source_title": "Seasonality in the Cross-Section of Stock Returns (Heston & Sadka, 2008)",
+    "source_url": "https://www.sciencedirect.com/science/article/abs/pii/S0304405X0700195X"
+  },
+  "day_of_week_seasonality": {
+    "name": "day_of_week_seasonality",
+    "family": "seasonality",
+    "formula": null,
+    "rationale": "Long-short anomaly and speculative-stock returns vary systematically with the day of the week (e.g. sentiment-driven legs do better on certain weekdays), creating exploitable day-of-week patterns in the cross-section.",
+    "source_title": "Day of the Week and the Cross-Section of Returns (Birru)",
+    "source_url": "https://english.ckgsb.edu.cn/sites/default/files/files/Day%20of%20the%20Week%20and%20the%20Cross-Section%20of%20Returns%20-%20Birru.pdf"
+  }
+}
