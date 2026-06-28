@@ -9,7 +9,7 @@ interface LiveAlpha {
 }
 
 const verdictColor: Record<string, string> = {
-  promising: "#34d399", weak: "#fbbf24", invalid: "#fb7185",
+  promising: "#07875a", weak: "#c2820a", invalid: "#d23b36",
 };
 
 export default function LivePropose() {

@@ -5,6 +5,7 @@ import {
 } from "recharts";
 import type { RunData } from "../types";
 import { familyColor, fmt } from "../lib";
+import BookReplay from "./BookReplay";
 
 interface ReplayData {
   name: string;
@@ -44,11 +45,11 @@ function Seg<T extends string | number>({ value, options, onChange, fmt: f }:
   { value: T; options: { label: string; v: T }[] | T[]; onChange: (v: T) => void; fmt?: (v: T) => string }) {
   const opts = (options as any[]).map((o) => (typeof o === "object" ? o : { label: f ? f(o) : String(o), v: o }));
   return (
-    <div className="flex gap-1 bg-surface2 rounded-lg p-1">
+    <div className="flex gap-1 bg-surface2 border border-border p-1">
       {opts.map((o) => (
         <button key={String(o.v)} onClick={() => onChange(o.v)}
-          className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
-            value === o.v ? "bg-cyan/15 text-cyan" : "text-muted hover:text-ink"}`}>
+          className={`px-2.5 py-1 text-xs font-medium transition ${
+            value === o.v ? "bg-cyan/12 text-cyan" : "text-muted hover:text-ink"}`}>
           {o.label}
         </button>
       ))}
@@ -67,8 +68,8 @@ function Stat({ label, value, accent = "text-ink", hint }: { label: string; valu
 }
 
 const Tri = (p: any, dir: number) => (dir > 0
-  ? <path d={`M${p.cx} ${p.cy - 9} L${p.cx - 5.5} ${p.cy - 1} L${p.cx + 5.5} ${p.cy - 1} Z`} fill="#34d399" stroke="#06080d" strokeWidth={0.8} />
-  : <path d={`M${p.cx} ${p.cy + 9} L${p.cx - 5.5} ${p.cy + 1} L${p.cx + 5.5} ${p.cy + 1} Z`} fill="#fb7185" stroke="#06080d" strokeWidth={0.8} />);
+  ? <path d={`M${p.cx} ${p.cy - 9} L${p.cx - 5.5} ${p.cy - 1} L${p.cx + 5.5} ${p.cy - 1} Z`} fill="#07875a" stroke="#ffffff" strokeWidth={0.8} />
+  : <path d={`M${p.cx} ${p.cy + 9} L${p.cx - 5.5} ${p.cy + 1} L${p.cx + 5.5} ${p.cy + 1} Z`} fill="#d23b36" stroke="#ffffff" strokeWidth={0.8} />);
 
 /** Representative name's price with the alpha's conviction long/short episodes.
  *  We window the daily data ourselves (zoom presets + a scroll slider) so only
@@ -107,11 +108,11 @@ const NameChart = memo(function NameChart({ data, onSymbol }: { data: ReplayData
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs inline-flex items-center gap-1 text-muted"><span className="text-emerald">▲</span> long</span>
           <span className="text-xs inline-flex items-center gap-1 text-muted"><span className="text-rose">▼</span> short</span>
-          <div className="flex gap-1 bg-surface2 rounded-lg p-1">
+          <div className="flex gap-1 bg-surface2 border border-border p-1">
             {PRESETS.map(([l, d]) => (
               <button key={l} onClick={() => zoom(d)}
-                className={`px-2 py-1 rounded-md text-[11px] font-medium transition ${
-                  len === d ? "bg-cyan/15 text-cyan" : "text-muted hover:text-ink"}`}>{l}</button>
+                className={`px-2 py-1 text-[11px] font-medium transition ${
+                  len === d ? "bg-cyan/12 text-cyan" : "text-muted hover:text-ink"}`}>{l}</button>
             ))}
           </div>
           {data.candidates.length > 0 && (
@@ -124,16 +125,16 @@ const NameChart = memo(function NameChart({ data, onSymbol }: { data: ReplayData
       </div>
       <ResponsiveContainer width="100%" height={252}>
         <ComposedChart data={visible} margin={{ top: 10, right: 14, bottom: 0, left: 4 }}>
-          <CartesianGrid stroke="#1e2740" strokeDasharray="3 3" vertical={false} />
+          <CartesianGrid stroke="#e7eaef" strokeDasharray="3 3" vertical={false} />
           {epiVis.map((e, i) => (
-            <ReferenceArea key={i} x1={e.x1} x2={e.x2} fill={e.dir > 0 ? "#34d399" : "#fb7185"} fillOpacity={0.12} />
+            <ReferenceArea key={i} x1={e.x1} x2={e.x2} fill={e.dir > 0 ? "#07875a" : "#d23b36"} fillOpacity={0.12} />
           ))}
-          <XAxis dataKey="date" stroke="#5a6477" fontSize={10} minTickGap={44}
+          <XAxis dataKey="date" stroke="#8b95a4" fontSize={10} minTickGap={44}
             tickFormatter={(d) => String(d).slice(0, 7)} />
-          <YAxis stroke="#5a6477" fontSize={11} width={52} domain={["auto", "auto"]} tickFormatter={(v) => `$${v}`} />
-          <Tooltip contentStyle={{ background: "#0e1320", border: "1px solid #1e2740", borderRadius: 10 }}
+          <YAxis stroke="#8b95a4" fontSize={11} width={52} domain={["auto", "auto"]} tickFormatter={(v) => `$${v}`} />
+          <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e7eaef", borderRadius: 0 }}
             labelFormatter={(d) => d} formatter={(v: any) => [`$${fmt(v)}`, data.series.symbol]} />
-          <Line type="monotone" dataKey="price" stroke="#cbd5e1" strokeWidth={1.7} dot={false} connectNulls isAnimationActive={false} />
+          <Line type="monotone" dataKey="price" stroke="#334155" strokeWidth={1.7} dot={false} connectNulls isAnimationActive={false} />
           {epiVis.filter((e) => e.mx).map((e, i) => (
             <ReferenceDot key={`m${i}`} x={e.mx as string} y={e.price as number} shape={(p: any) => Tri(p, e.dir)} />
           ))}
@@ -156,6 +157,7 @@ export default function AlphaReplay({ run, selected, onSelect }:
   const families = useMemo(() => [...new Set(catalog.map((c) => c.family))], [catalog]);
   const name = selected ?? "alpha005";
 
+  const [tab, setTab] = useState<"single" | "book">("single");
   const [deposit, setDeposit] = useState(100_000);
   const [lev, setLev] = useState(3);
   const [cost, setCost] = useState(0);
@@ -174,6 +176,7 @@ export default function AlphaReplay({ run, selected, onSelect }:
   }, [name]);
 
   useEffect(() => {
+    if (tab !== "single") return;
     const ctrl = new AbortController();
     setLoading(true); setErr(null);
     const url = `/api/alpha_replay/${name}` + (symbol ? `?symbol=${encodeURIComponent(symbol)}` : "");
@@ -189,7 +192,7 @@ export default function AlphaReplay({ run, selected, onSelect }:
         setLoading(false);
       });
     return () => ctrl.abort();
-  }, [name, symbol]);
+  }, [name, symbol, tab]);
 
   // compound daily (accurate), then downsample to ~520 pts for snappy rendering / replay
   const { display, stats, D } = useMemo(() => {
@@ -254,6 +257,16 @@ export default function AlphaReplay({ run, selected, onSelect }:
 
   return (
     <div className="card p-5 space-y-5">
+      <div className="flex items-center gap-1 bg-surface2 border border-border p-1 w-fit">
+        {([["single", "Single alpha"], ["book", "Combined book"]] as const).map(([v, label]) => (
+          <button key={v} onClick={() => setTab(v)}
+            className={`px-3 py-1.5 text-xs font-medium transition ${
+              tab === v ? "bg-cyan/12 text-cyan" : "text-muted hover:text-ink"}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {tab === "book" ? <BookReplay run={run} /> : (<>
       {/* ---- controls ---- */}
       <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
         <label className="block">
@@ -327,32 +340,32 @@ export default function AlphaReplay({ run, selected, onSelect }:
               <h3 className="text-base font-semibold text-ink">Portfolio equity
                 <span className="text-muted font-normal"> · {moneyFull(deposit)} at {lev}× {cost === 0 ? "(gross)" : `· ${cost} bps`}</span>
               </h3>
-              {cur && <span className="text-sm font-mono" style={{ color: up ? "#34d399" : "#fb7185" }}>
+              {cur && <span className="text-sm font-mono" style={{ color: up ? "#07875a" : "#d23b36" }}>
                 {cur.date} · {money(cur.equity)}</span>}
             </div>
             <ResponsiveContainer width="100%" height={260}>
               <ComposedChart data={view} margin={{ top: 6, right: 14, bottom: 0, left: 4 }}>
                 <defs>
                   <linearGradient id="eqfill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={up ? "#34d399" : "#fb7185"} stopOpacity={0.32} />
-                    <stop offset="100%" stopColor={up ? "#34d399" : "#fb7185"} stopOpacity={0} />
+                    <stop offset="0%" stopColor={up ? "#07875a" : "#d23b36"} stopOpacity={0.32} />
+                    <stop offset="100%" stopColor={up ? "#07875a" : "#d23b36"} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="#1e2740" strokeDasharray="3 3" vertical={false} />
+                <CartesianGrid stroke="#e7eaef" strokeDasharray="3 3" vertical={false} />
                 {regimes.map((r, i) => r.a! <= tEff && (
-                  <ReferenceArea key={i} x1={r.a} x2={Math.min(r.b!, tEff)} fill="#fb7185" fillOpacity={0.05}
-                    label={{ value: r.l, position: "insideTop", fill: "#fb7185", fontSize: 9 }} />
+                  <ReferenceArea key={i} x1={r.a} x2={Math.min(r.b!, tEff)} fill="#d23b36" fillOpacity={0.05}
+                    label={{ value: r.l, position: "insideTop", fill: "#d23b36", fontSize: 9 }} />
                 ))}
-                <ReferenceLine y={deposit} stroke="#3a4658" strokeDasharray="4 4" strokeOpacity={0.8} />
+                <ReferenceLine y={deposit} stroke="#c7cdd8" strokeDasharray="4 4" strokeOpacity={0.8} />
                 <XAxis dataKey="di" type="number" domain={[0, D - 1]} hide />
-                <YAxis tickFormatter={money} stroke="#5a6477" fontSize={11} width={52} domain={["auto", "auto"]} />
-                <Tooltip contentStyle={{ background: "#0e1320", border: "1px solid #1e2740", borderRadius: 10 }}
+                <YAxis tickFormatter={money} stroke="#8b95a4" fontSize={11} width={52} domain={["auto", "auto"]} />
+                <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e7eaef", borderRadius: 0 }}
                   labelFormatter={(d) => display[d]?.date ?? ""} formatter={(v: any) => [moneyFull(v), "Equity"]} />
-                <Area type="monotone" dataKey="equity" stroke={up ? "#34d399" : "#fb7185"} strokeWidth={2.4}
+                <Area type="monotone" dataKey="equity" stroke={up ? "#07875a" : "#d23b36"} strokeWidth={2.4}
                   fill="url(#eqfill)" dot={false} isAnimationActive={false} />
                 {cur && <ReferenceDot x={tEff} y={cur.equity} ifOverflow="extendDomain" shape={(p: any) => (
-                  <g><circle cx={p.cx} cy={p.cy} r={3.5} fill={up ? "#34d399" : "#fb7185"} stroke="#06080d" strokeWidth={1.5} />
-                    <circle cx={p.cx} cy={p.cy} fill="none" stroke={up ? "#34d399" : "#fb7185"} strokeWidth={1.3}>
+                  <g><circle cx={p.cx} cy={p.cy} r={3.5} fill={up ? "#07875a" : "#d23b36"} stroke="#ffffff" strokeWidth={1.5} />
+                    <circle cx={p.cx} cy={p.cy} fill="none" stroke={up ? "#07875a" : "#d23b36"} strokeWidth={1.3}>
                       <animate attributeName="r" values="4;11;4" dur="2.2s" repeatCount="indefinite" />
                       <animate attributeName="opacity" values="0.7;0;0.7" dur="2.2s" repeatCount="indefinite" /></circle></g>
                 )} />}
@@ -363,16 +376,16 @@ export default function AlphaReplay({ run, selected, onSelect }:
               <ComposedChart data={view} margin={{ top: 2, right: 14, bottom: 0, left: 4 }}>
                 <defs>
                   <linearGradient id="ddfill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#fb7185" stopOpacity={0} />
-                    <stop offset="100%" stopColor="#fb7185" stopOpacity={0.4} />
+                    <stop offset="0%" stopColor="#d23b36" stopOpacity={0} />
+                    <stop offset="100%" stopColor="#d23b36" stopOpacity={0.4} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="di" type="number" domain={[0, D - 1]}
-                  stroke="#5a6477" fontSize={10} tickFormatter={(d) => display[d]?.date?.slice(0, 4) ?? ""} />
-                <YAxis tickFormatter={(v) => `${Math.round(v * 100)}%`} stroke="#5a6477" fontSize={10} width={52} />
-                <Tooltip contentStyle={{ background: "#0e1320", border: "1px solid #1e2740", borderRadius: 10 }}
+                  stroke="#8b95a4" fontSize={10} tickFormatter={(d) => display[d]?.date?.slice(0, 4) ?? ""} />
+                <YAxis tickFormatter={(v) => `${Math.round(v * 100)}%`} stroke="#8b95a4" fontSize={10} width={52} />
+                <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e7eaef", borderRadius: 0 }}
                   labelFormatter={(d) => display[d]?.date ?? ""} formatter={(v: any) => [`${(v * 100).toFixed(1)}%`, "Drawdown"]} />
-                <Area type="monotone" dataKey="dd" stroke="#fb7185" strokeWidth={1.2} fill="url(#ddfill)"
+                <Area type="monotone" dataKey="dd" stroke="#d23b36" strokeWidth={1.2} fill="url(#ddfill)"
                   dot={false} isAnimationActive={false} />
               </ComposedChart>
             </ResponsiveContainer>
@@ -381,7 +394,7 @@ export default function AlphaReplay({ run, selected, onSelect }:
           {/* ---- replay bar ---- */}
           <div className="flex items-center gap-4">
             <button onClick={() => { if (tEff >= D - 1) setT(0); setPlaying(!playing); }}
-              className="shrink-0 w-10 h-10 rounded-full bg-cyan/15 text-cyan grid place-items-center hover:bg-cyan/25 transition glow-cyan">
+              className="shrink-0 w-10 h-10 bg-cyan text-white grid place-items-center hover:bg-cyan/90 transition">
               {playing
                 ? <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="2" width="4" height="12" rx="1" /><rect x="9" y="2" width="4" height="12" rx="1" /></svg>
                 : <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9-5.5z" /></svg>}
@@ -409,6 +422,7 @@ export default function AlphaReplay({ run, selected, onSelect }:
           </p>
         </>
       )}
+      </>)}
     </div>
   );
 }

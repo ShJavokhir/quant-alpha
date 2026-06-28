@@ -36,8 +36,8 @@ export default function TimelineScrubber({ generations, value, onChange, playing
           if (value >= last) onChange(0);
           setPlaying(!playing);
         }}
-        className="shrink-0 w-11 h-11 rounded-full bg-cyan/15 text-cyan grid place-items-center
-                   hover:bg-cyan/25 transition glow-cyan">
+        className="shrink-0 w-11 h-11 bg-cyan text-white grid place-items-center
+                   hover:bg-cyan/90 transition">
         {playing ? (
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="2" width="4" height="12" rx="1" /><rect x="9" y="2" width="4" height="12" rx="1" /></svg>
         ) : (
@@ -67,11 +67,11 @@ export default function TimelineScrubber({ generations, value, onChange, playing
         </div>
       </div>
 
-      <div className="shrink-0 flex items-center gap-1 bg-surface2 rounded-lg p-1">
+      <div className="shrink-0 flex items-center gap-1 bg-surface2 border border-border p-1">
         {SPEEDS.map((s) => (
           <button key={s} onClick={() => setSpeed(s)}
-            className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
-              speed === s ? "bg-cyan/15 text-cyan" : "text-muted hover:text-ink"}`}>
+            className={`px-2.5 py-1 text-xs font-medium transition ${
+              speed === s ? "bg-cyan/12 text-cyan" : "text-muted hover:text-ink"}`}>
             {s}×
           </button>
         ))}

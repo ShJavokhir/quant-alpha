@@ -11,11 +11,11 @@ import type { BookMetrics, RunData } from "../types";
 import { ARM_META, fmt, pct } from "../lib";
 
 const tooltipStyle = {
-  background: "#0e1320",
-  border: "1px solid #1e2740",
-  borderRadius: 10,
+  background: "#ffffff",
+  border: "1px solid #e7eaef",
+  borderRadius: 0,
   fontSize: 12,
-  color: "#e8eef6",
+  color: "#0e1216",
 } as const;
 
 const GUARDRAILS = [
@@ -152,23 +152,23 @@ export default function HonestyPanel({ run }: { run: RunData }) {
           {sweep.length ? (
             <ResponsiveContainer width="100%" height={180}>
               <LineChart data={sweep} margin={{ top: 6, right: 8, bottom: 0, left: -18 }}>
-                <CartesianGrid stroke="#1e2740" strokeDasharray="3 3" vertical={false} />
+                <CartesianGrid stroke="#e7eaef" strokeDasharray="3 3" vertical={false} />
                 <XAxis
                   dataKey="bps"
-                  stroke="#5a6477"
-                  tick={{ fontSize: 11, fill: "#5a6477" }}
+                  stroke="#8b95a4"
+                  tick={{ fontSize: 11, fill: "#8b95a4" }}
                   tickLine={false}
-                  axisLine={{ stroke: "#1e2740" }}
+                  axisLine={{ stroke: "#e7eaef" }}
                 />
                 <YAxis
-                  stroke="#5a6477"
-                  tick={{ fontSize: 11, fill: "#5a6477" }}
+                  stroke="#8b95a4"
+                  tick={{ fontSize: 11, fill: "#8b95a4" }}
                   tickLine={false}
                   axisLine={false}
                 />
                 <Tooltip
                   contentStyle={tooltipStyle}
-                  labelStyle={{ color: "#8a97ad" }}
+                  labelStyle={{ color: "#6b7280" }}
                   labelFormatter={(v) => `${v} bps`}
                 />
                 <Line

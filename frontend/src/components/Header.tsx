@@ -90,9 +90,9 @@ export default function Header({ run }: { run: RunData }) {
               <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan" />
             </span>
             <span
-              className="text-xl font-bold tracking-tight"
+              className="text-xl font-extrabold tracking-tight"
               style={{
-                background: "linear-gradient(90deg, #22d3ee, #a78bfa)",
+                background: "linear-gradient(90deg, #0a6ce0, #6645e6)",
                 WebkitBackgroundClip: "text",
                 backgroundClip: "text",
                 color: "transparent",

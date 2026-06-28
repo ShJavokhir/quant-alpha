@@ -1,24 +1,47 @@
 import type { RunData } from "./types";
 
 export const FAMILY_COLORS: Record<string, string> = {
-  momentum: "#fbbf24",
-  reversal: "#22d3ee",
-  volume: "#a78bfa",
-  volatility: "#fb7185",
-  value: "#34d399",
-  microstructure: "#38bdf8",
-  seasonality: "#f472b6",
-  unknown: "#8a97ad",
+  momentum: "#c2820a",
+  reversal: "#0e88a8",
+  volume: "#6645e6",
+  volatility: "#d23b36",
+  value: "#07875a",
+  microstructure: "#1f7fd0",
+  seasonality: "#c2459a",
+  unknown: "#6b7280",
 };
 
 export const familyColor = (f: string) => FAMILY_COLORS[f] || FAMILY_COLORS.unknown;
 
 export const ARM_META: Record<string, { label: string; color: string; dash?: string }> = {
-  adaptive: { label: "Agent (memory ON)", color: "#22d3ee" },
-  memory_off: { label: "Memory ablated", color: "#fbbf24", dash: "5 4" },
-  random: { label: "Random search", color: "#5a6477", dash: "2 4" },
-  frozen: { label: "Frozen fleet", color: "#fb7185", dash: "7 5" },
+  adaptive: { label: "Agent (memory ON)", color: "#0a6ce0" },
+  memory_off: { label: "Memory ablated", color: "#c2820a", dash: "5 4" },
+  random: { label: "Random search", color: "#a3acba", dash: "2 4" },
+  frozen: { label: "Frozen fleet", color: "#cf7a5e", dash: "7 5" },
 };
+
+/* up / down semantics — legible on white */
+export const UP = "#07875a";
+export const DOWN = "#d23b36";
+
+/* shared recharts theme so every chart matches the light, sharp surface */
+export const CHART = {
+  grid: "#e7eaef",
+  axis: "#8b95a4",
+  refLine: "#c7cdd8",
+  dotStroke: "#ffffff",
+  regimeFill: "#d23b36",
+  regimeLabel: "#a85049",
+};
+
+export const tooltipStyle = {
+  background: "#ffffff",
+  border: "1px solid #d2d7e0",
+  borderRadius: 0,
+  fontSize: 12,
+  color: "#0e1216",
+  boxShadow: "0 6px 20px -8px rgba(14,18,22,0.22)",
+} as const;
 
 export const fmt = (x: number | null | undefined, d = 2) =>
   x === null || x === undefined || Number.isNaN(x) ? "–" : x.toFixed(d);
@@ -27,10 +50,10 @@ export const signed = (x: number | null | undefined, d = 2) =>
   x === null || x === undefined ? "–" : (x >= 0 ? "+" : "") + x.toFixed(d);
 
 export const healthColor = (ir: number) => {
-  if (ir >= 1.5) return "#34d399";
-  if (ir >= 0.6) return "#a3e635";
-  if (ir >= 0.0) return "#fbbf24";
-  return "#fb7185";
+  if (ir >= 1.5) return "#07875a";
+  if (ir >= 0.6) return "#4d9a16";
+  if (ir >= 0.0) return "#c2820a";
+  return "#d23b36";
 };
 
 export async function loadRun(): Promise<RunData> {

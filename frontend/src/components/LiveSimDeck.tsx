@@ -4,7 +4,7 @@ import {
   ReferenceArea, ReferenceLine, ReferenceDot, Legend,
 } from "recharts";
 import type { RunData } from "../types";
-import { ARM_META, equityCurves, fmt } from "../lib";
+import { ARM_META, CHART, equityCurves, fmt, tooltipStyle } from "../lib";
 
 /** Tween a number from its current displayed value to `target` (ease-out cubic).
  *  Re-runs whenever the generation changes, so the HUD ticks like a live tape. */
@@ -120,11 +120,11 @@ function EquityPanel({ run, gen }: { run: RunData; gen: number }) {
           <p className="text-sm text-muted">Cumulative equity (base 100), compounded from each unseen
             block's realised return. Secondary view — net P&amp;L is the hard frontier.</p>
         </div>
-        <div className="flex gap-1 bg-surface2 rounded-lg p-1 shrink-0">
+        <div className="flex gap-1 bg-surface2 border border-border p-1 shrink-0">
           {(["net", "gross"] as Mode[]).map((m) => (
             <button key={m} onClick={() => setMode(m)}
-              className={`px-3 py-1 rounded-md text-xs font-medium transition ${
-                mode === m ? "bg-cyan/15 text-cyan" : "text-muted hover:text-ink"}`}>
+              className={`px-3 py-1 text-xs font-medium transition ${
+                mode === m ? "bg-cyan/12 text-cyan" : "text-muted hover:text-ink"}`}>
               {m === "net" ? "Net of 10bps" : "Gross"}
             </button>
           ))}
@@ -133,17 +133,17 @@ function EquityPanel({ run, gen }: { run: RunData; gen: number }) {
 
       <ResponsiveContainer width="100%" height={210}>
         <LineChart data={data} margin={{ top: 6, right: 14, bottom: 0, left: -14 }}>
-          <CartesianGrid stroke="#1e2740" strokeDasharray="3 3" vertical={false} />
+          <CartesianGrid stroke={CHART.grid} strokeDasharray="3 3" vertical={false} />
           {regimes.map((r, i) => r.x1! <= idx && (
-            <ReferenceArea key={i} x1={r.x1} x2={Math.min(r.x2!, idx)} fill="#fb7185" fillOpacity={0.06}
-              label={{ value: r.label, position: "insideTop", fill: "#fb7185", fontSize: 9 }} />
+            <ReferenceArea key={i} x1={r.x1} x2={Math.min(r.x2!, idx)} fill={CHART.regimeFill} fillOpacity={0.07}
+              label={{ value: r.label, position: "insideTop", fill: CHART.regimeLabel, fontSize: 9 }} />
           ))}
-          <ReferenceLine y={100} stroke="#3a4658" strokeOpacity={0.7} strokeDasharray="4 4" />
+          <ReferenceLine y={100} stroke={CHART.refLine} strokeDasharray="4 4" />
           <XAxis dataKey="g" type="number" domain={[0, all.length - 1]} allowDecimals={false}
-            stroke="#5a6477" fontSize={11}
+            stroke={CHART.axis} fontSize={11}
             tickFormatter={(g) => all[g]?.date?.slice(0, 7) ?? g} />
-          <YAxis domain={domain} stroke="#5a6477" fontSize={11} width={46} />
-          <Tooltip contentStyle={{ background: "#0e1320", border: "1px solid #1e2740", borderRadius: 10 }}
+          <YAxis domain={domain} stroke={CHART.axis} fontSize={11} width={46} />
+          <Tooltip contentStyle={tooltipStyle}
             labelFormatter={(g) => `Gen ${g} · ${all[g]?.date ?? ""}`}
             formatter={(v: any, n: any) => [v, n === aKey ? "Agent" : "Frozen"]} />
           <Legend formatter={(v) => (v === aKey ? "Agent (memory ON)" : "Frozen fleet")}
@@ -156,7 +156,7 @@ function EquityPanel({ run, gen }: { run: RunData; gen: number }) {
             <ReferenceDot x={idx} y={cur[aKey]} ifOverflow="extendDomain"
               shape={(p: any) => (
                 <g>
-                  <circle cx={p.cx} cy={p.cy} r={3.5} fill={aCol} stroke="#06080d" strokeWidth={1.5} />
+                  <circle cx={p.cx} cy={p.cy} r={3.5} fill={aCol} stroke={CHART.dotStroke} strokeWidth={1.5} />
                   <circle cx={p.cx} cy={p.cy} fill="none" stroke={aCol} strokeWidth={1.4}>
                     <animate attributeName="r" values="4;11;4" dur="2.2s" repeatCount="indefinite" />
                     <animate attributeName="opacity" values="0.7;0;0.7" dur="2.2s" repeatCount="indefinite" />
@@ -191,19 +191,19 @@ export default function LiveSimDeck({ run, gen, playing }:
     const irRoll = gens.map((g, i) => ((irSum += g.book_test.ic_ir), irSum / (i + 1)));
     const hitCum = gens.map((g) => ((acc += g.n_accepted), (prop += g.n_proposed), prop ? acc / prop : 0));
     return [
-      { label: "Signal quality · IC-IR", color: "#22d3ee", goodUp: true,
+      { label: "Signal quality · IC-IR", color: "#0a6ce0", goodUp: true,
         history: irRoll, format: (n) => n.toFixed(2),
         sub: "rank-IC info ratio · rolling avg (≥1 is strong)" },
-      { label: "Keepers discovered", color: "#a78bfa", goodUp: true,
+      { label: "Keepers discovered", color: "#6645e6", goodUp: true,
         history: keepers, format: (n) => Math.round(n).toString(),
         sub: "alphas that survived selection (cumulative)" },
-      { label: "Live fleet", color: "#34d399", goodUp: true,
+      { label: "Live fleet", color: "#07875a", goodUp: true,
         history: gens.map((g) => g.fleet_size), format: (n) => Math.round(n).toString(),
         sub: "alphas trading this block" },
-      { label: "Hit rate", color: "#38bdf8", goodUp: true,
+      { label: "Hit rate", color: "#1f7fd0", goodUp: true,
         history: hitCum, format: (n) => `${Math.round(n * 100)}%`,
         sub: "proposals admitted · cumulative" },
-      { label: "Turnover", color: "#fbbf24", goodUp: false,
+      { label: "Turnover", color: "#c2820a", goodUp: false,
         history: gens.map((g) => g.book_test.turnover), format: (n) => n.toFixed(2),
         sub: "daily name turnover · lower = cheaper" },
     ];

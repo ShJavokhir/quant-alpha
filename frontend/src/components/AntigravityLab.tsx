@@ -22,7 +22,7 @@ interface JobStatus {
 }
 
 const verdictColor: Record<string, string> = {
-  promising: "#34d399", weak: "#fbbf24", invalid: "#fb7185",
+  promising: "#07875a", weak: "#c2820a", invalid: "#d23b36",
 };
 
 const PHASES = [
@@ -67,11 +67,11 @@ function walk(seed: number, n: number, drift: number): number[] {
 
 function stepColor(type: string): string {
   const t = type.toLowerCase();
-  if (/(browse|search|web|http|fetch|read)/.test(t)) return "#38bdf8";
-  if (/(code|exec|python|shell|run|script)/.test(t)) return "#a78bfa";
-  if (/(backtest|dsl|eval|sharpe)/.test(t)) return "#34d399";
-  if (/(reason|think|plan)/.test(t)) return "#fbbf24";
-  return "#5a6477";
+  if (/(browse|search|web|http|fetch|read)/.test(t)) return "#1f7fd0";
+  if (/(code|exec|python|shell|run|script)/.test(t)) return "#6645e6";
+  if (/(backtest|dsl|eval|sharpe)/.test(t)) return "#07875a";
+  if (/(reason|think|plan)/.test(t)) return "#c2820a";
+  return "#8b95a4";
 }
 
 export default function AntigravityLab() {
@@ -160,7 +160,7 @@ export default function AntigravityLab() {
   return (
     <div className="card p-5 relative overflow-hidden">
       <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, rgba(167,139,250,0.18), transparent 70%)" }} />
+        style={{ background: "radial-gradient(circle, rgba(102,69,230,0.09), transparent 70%)" }} />
 
       {/* header */}
       <div className="flex items-center justify-between gap-3 flex-wrap relative">
@@ -175,9 +175,9 @@ export default function AntigravityLab() {
             alpha — backtested on the spot.</p>
         </div>
         <button onClick={run} disabled={running}
-          className="shrink-0 px-4 py-2 rounded-xl bg-violet/15 text-violet font-medium text-sm
-                     hover:bg-violet/25 transition disabled:opacity-50"
-          style={{ boxShadow: "0 0 30px -8px rgba(167,139,250,0.5)" }}>
+          className="shrink-0 px-4 py-2 bg-violet/12 text-violet font-medium text-sm border border-violet/20
+                     hover:bg-violet/20 transition disabled:opacity-50"
+          style={{ boxShadow: "0 1px 2px rgba(102,69,230,0.18)" }}>
           {running ? "researching…" : alpha ? "🛰 Research again" : "🛰 Research live"}
         </button>
       </div>
@@ -186,10 +186,10 @@ export default function AntigravityLab() {
 
       {/* ---------------- the machine screen ---------------- */}
       {(running || completed) && (
-        <div className="mt-4 rounded-2xl border border-border overflow-hidden"
-          style={{ background: "linear-gradient(180deg,#080b12,#0b1018)" }}>
+        <div className="mt-4 border border-line overflow-hidden"
+          style={{ background: "#fbfcfe" }}>
           {/* title bar */}
-          <div className="flex items-center gap-3 px-3 py-2 border-b border-border bg-black/30">
+          <div className="flex items-center gap-3 px-3 py-2 border-b border-border bg-surface2">
             <div className="flex gap-1.5">
               <span className="w-3 h-3 rounded-full bg-rose/70" />
               <span className="w-3 h-3 rounded-full bg-amber/70" />
@@ -213,7 +213,7 @@ export default function AntigravityLab() {
 
           <div className="grid grid-cols-[150px_1fr]">
             {/* left rail — REAL agent steps streaming in */}
-            <div className="border-r border-border p-2.5 bg-black/20 min-h-[300px]">
+            <div className="border-r border-border p-2.5 bg-surface2/60 min-h-[300px]">
               <div className="text-[10px] uppercase tracking-wide text-faint mb-2">
                 agent steps · {status?.n_steps ?? 0}
               </div>
@@ -357,13 +357,13 @@ function Win({ idx, eff, done, children }:
       animate={{ opacity: pending ? 0.4 : 1 }}
       className={`relative rounded-lg border overflow-hidden ${active ? "machine-scan" : ""}`}
       style={{
-        borderColor: active ? "rgba(167,139,250,0.5)" : "var(--color-border)",
-        background: active ? "rgba(167,139,250,0.06)" : "rgba(255,255,255,0.015)",
-        boxShadow: active ? "0 0 24px -10px rgba(167,139,250,0.6)" : "none",
+        borderColor: active ? "rgba(102,69,230,0.45)" : "var(--color-border)",
+        background: active ? "rgba(102,69,230,0.06)" : "transparent",
+        boxShadow: active ? "0 1px 10px -5px rgba(102,69,230,0.4)" : "none",
       }}>
       <div className="flex items-center gap-2 px-2.5 py-1 border-b border-border/60">
         <span className="text-[10px] font-mono"
-          style={{ color: done ? "#34d399" : active ? "#a78bfa" : "#5a6477" }}>
+          style={{ color: done ? "#07875a" : active ? "#6645e6" : "#8b95a4" }}>
           {done ? "✓" : active ? "▸" : "○"}
         </span>
         <span className="text-[10px] font-semibold text-ink/80">{ph.label}</span>
@@ -396,13 +396,13 @@ function Equity({ seed, drift, progress }: { seed: number; drift: number; progre
     <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="shrink-0">
       <defs>
         <linearGradient id="agEq" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#34d399" stopOpacity={0.35} />
-          <stop offset="100%" stopColor="#34d399" stopOpacity={0} />
+          <stop offset="0%" stopColor="#07875a" stopOpacity={0.35} />
+          <stop offset="100%" stopColor="#07875a" stopOpacity={0} />
         </linearGradient>
       </defs>
       {area && <path d={area} fill="url(#agEq)" />}
-      <path d={line} fill="none" stroke="#34d399" strokeWidth={1.6} />
-      {tip && <circle cx={tip[0]} cy={tip[1]} r={2.4} fill="#34d399" />}
+      <path d={line} fill="none" stroke="#07875a" strokeWidth={1.6} />
+      {tip && <circle cx={tip[0]} cy={tip[1]} r={2.4} fill="#07875a" />}
     </svg>
   );
 }

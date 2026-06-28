@@ -58,11 +58,11 @@ export default function ImprovementChart({ run }: { run: RunData }) {
           <p className="text-sm text-muted">Running-average out-of-sample quality on each unseen block.
             The evolving fleet adapts through regimes; the frozen seed fleet drifts.</p>
         </div>
-        <div className="flex gap-1 bg-surface2 rounded-lg p-1">
+        <div className="flex gap-1 bg-surface2 border border-border p-1">
           {METRICS.map((m) => (
             <button key={m.key} onClick={() => setMetric(m.key)}
-              className={`px-3 py-1 rounded-md text-xs font-medium transition ${
-                metric === m.key ? "bg-cyan/15 text-cyan" : "text-muted hover:text-ink"}`}>
+              className={`px-3 py-1 text-xs font-medium transition ${
+                metric === m.key ? "bg-cyan/12 text-cyan" : "text-muted hover:text-ink"}`}>
               {m.label}
             </button>
           ))}
@@ -71,16 +71,16 @@ export default function ImprovementChart({ run }: { run: RunData }) {
 
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={data} margin={{ top: 6, right: 12, bottom: 0, left: -16 }}>
-          <CartesianGrid stroke="#1e2740" strokeDasharray="3 3" vertical={false} />
+          <CartesianGrid stroke="#e7eaef" strokeDasharray="3 3" vertical={false} />
           {regimeBands.map((r, i) => (
-            <ReferenceArea key={i} x1={r.x1} x2={r.x2} fill="#fb7185" fillOpacity={0.06}
-              label={{ value: r.label, position: "insideTop", fill: "#fb7185", fontSize: 10 }} />
+            <ReferenceArea key={i} x1={r.x1} x2={r.x2} fill="#d23b36" fillOpacity={0.06}
+              label={{ value: r.label, position: "insideTop", fill: "#d23b36", fontSize: 10 }} />
           ))}
-          <ReferenceLine y={0} stroke="#3a4658" strokeOpacity={0.6} />
-          <XAxis dataKey="g" stroke="#5a6477" fontSize={11}
+          <ReferenceLine y={0} stroke="#c7cdd8" strokeOpacity={0.6} />
+          <XAxis dataKey="g" stroke="#8b95a4" fontSize={11}
             tickFormatter={(g) => data[g]?.date?.slice(0, 7) ?? g} />
-          <YAxis stroke="#5a6477" fontSize={11} />
-          <Tooltip contentStyle={{ background: "#0e1320", border: "1px solid #1e2740", borderRadius: 10 }}
+          <YAxis stroke="#8b95a4" fontSize={11} />
+          <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e7eaef", borderRadius: 0 }}
             labelFormatter={(g) => `Gen ${g} · ${data[g]?.date ?? ""}`}
             formatter={(v: any, n: any) => [fmt(v), ARM_META[n]?.label ?? n]} />
           <Legend formatter={(v) => ARM_META[v]?.label ?? v} wrapperStyle={{ fontSize: 12 }} />

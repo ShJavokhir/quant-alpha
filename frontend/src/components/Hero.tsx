@@ -102,7 +102,7 @@ export default function Hero({ run }: { run: RunData }) {
         An AI that researches alpha —{" "}
         <span
           style={{
-            background: "linear-gradient(90deg, #22d3ee, #a78bfa)",
+            background: "linear-gradient(90deg, #0a6ce0, #6645e6)",
             WebkitBackgroundClip: "text",
             backgroundClip: "text",
             color: "transparent",

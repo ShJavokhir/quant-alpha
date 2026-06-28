@@ -36,11 +36,11 @@ interface AlphaDetail {
 }
 
 const tooltipStyle = {
-  background: "#0e1320",
-  border: "1px solid #1e2740",
-  borderRadius: 10,
+  background: "#ffffff",
+  border: "1px solid #e7eaef",
+  borderRadius: 0,
   fontSize: 12,
-  color: "#e8eef6",
+  color: "#0e1216",
 } as const;
 
 function MiniChart({
@@ -69,7 +69,7 @@ function MiniChart({
             <YAxis hide domain={["auto", "auto"]} />
             <Tooltip
               contentStyle={tooltipStyle}
-              labelStyle={{ color: "#8a97ad" }}
+              labelStyle={{ color: "#6b7280" }}
               formatter={(v) => [fmt(Number(v), 4), ""]}
             />
             <Area
@@ -269,8 +269,8 @@ export default function AlphaModal({
 
             {/* Charts */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <MiniChart data={data.cum_ic} color="#22d3ee" label="Cumulative IC" />
-              <MiniChart data={data.equity} color="#34d399" label="Equity (gross)" />
+              <MiniChart data={data.cum_ic} color="#0a6ce0" label="Cumulative IC" />
+              <MiniChart data={data.equity} color="#07875a" label="Equity (gross)" />
             </div>
 
             {/* Similar alphas via Atlas Vector Search */}

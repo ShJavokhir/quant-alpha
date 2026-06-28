@@ -38,7 +38,7 @@ export default function App() {
   }, []);
 
   if (err) return <Centered>Failed to load run data: {err}</Centered>;
-  if (!run) return <Centered><span className="animate-pulse text-cyan">Loading the lab…</span></Centered>;
+  if (!run) return <Centered><span className="animate-pulse text-cyan font-mono text-sm tracking-wide">LOADING THE LAB…</span></Centered>;
   if (!run.generations.length) return <Centered>Run has no generations.</Centered>;
 
   const curGen = run.generations[Math.min(gen, run.generations.length - 1)];
@@ -65,7 +65,7 @@ export default function App() {
 
         <section id="replay" className="space-y-3 scroll-mt-6">
           <SectionLabel n="02" title="Replay any strategy"
-            sub="Pick an alpha, set a deposit, and watch it trade: a real equity curve from your stake, with the book's long/short entries marked on a representative name. Click ▶ to replay." />
+            sub="Replay a single alpha — a real equity curve from your stake, with long/short entries marked on a representative name — or switch to Combined book to blend the fleet the way quants actually trade: many alphas netted into one portfolio that's smoother and cheaper than any of its parts." />
           <AlphaReplay run={run} selected={replayAlpha} onSelect={setReplayAlpha} />
         </section>
 
@@ -94,9 +94,9 @@ export default function App() {
         </section>
       </main>
 
-      <footer className="border-t border-border py-8 text-center text-xs text-faint">
-        DARWIN · self-evolving alpha research · {run.meta.n_stocks} stocks ·{" "}
-        {run.meta.timeline.first}–{run.meta.timeline.last} · research demo, not investment advice
+      <footer className="border-t border-border mt-10 py-8 text-center text-[11px] text-faint font-mono tracking-wide">
+        DARWIN · SELF-EVOLVING ALPHA RESEARCH · {run.meta.n_stocks} STOCKS ·{" "}
+        {run.meta.timeline.first}–{run.meta.timeline.last} · RESEARCH DEMO, NOT INVESTMENT ADVICE
       </footer>
 
       <AlphaModal name={alpha} onClose={() => setAlpha(null)} onReplay={replayWith} />
@@ -110,11 +110,13 @@ function Centered({ children }: { children: React.ReactNode }) {
 
 function SectionLabel({ n, title, sub }: { n: string; title: string; sub: string }) {
   return (
-    <div className="flex items-baseline gap-3 pt-4">
-      <span className="text-xs font-mono text-cyan/70">{n}</span>
+    <div className="flex items-baseline gap-4 pt-5">
+      <span className="text-[11px] font-mono font-semibold text-cyan tracking-[0.18em] pt-1 rule-accent pb-1">
+        {n}
+      </span>
       <div>
-        <h2 className="text-xl font-semibold text-ink tracking-tight">{title}</h2>
-        <p className="text-sm text-muted">{sub}</p>
+        <h2 className="text-xl font-bold text-ink tracking-tight">{title}</h2>
+        <p className="text-sm text-muted mt-0.5 max-w-3xl leading-relaxed">{sub}</p>
       </div>
     </div>
   );

@@ -69,8 +69,8 @@ export default function FleetViz({ gen, onSelectAlpha }:
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 560 }}>
           <defs>
             <radialGradient id="coreglow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="rgba(34,211,238,0.12)" />
-              <stop offset="100%" stopColor="rgba(34,211,238,0)" />
+              <stop offset="0%" stopColor="rgba(10,108,224,0.06)" />
+              <stop offset="100%" stopColor="rgba(10,108,224,0)" />
             </radialGradient>
           </defs>
           <circle cx={W / 2} cy={H / 2} r={230} fill="url(#coreglow)" />

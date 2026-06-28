@@ -217,6 +217,125 @@ def alpha_replay(name: str, symbol: str | None = None, run_id: str | None = None
             "cost_bps_default": run["meta"]["config"]["cost_bps"]}
 
 
+_BOOK_CACHE: dict = {}
+_ALPHA_EVAL_CACHE: dict = {}   # name -> (sig, metrics, daily pnl, daily turnover); makes basket edits snappy
+
+
+def _eval_one(lut, panel, cost, name):
+    """Evaluate a single alpha -> (raw signal, scalar metrics, daily pnl, daily turnover).
+    Cached per name so editing the basket only re-blends already-evaluated signals."""
+    if name in _ALPHA_EVAL_CACHE:
+        return _ALPHA_EVAL_CACHE[name]
+    sig = dsl.evaluate(lut[name]["formula"], panel)
+    m = backtest.evaluate_signal(sig, panel, cost_bps=cost, with_series=True)
+    s = m.pop("_series")
+    pnl = s["pnl"].reindex(sig.index).fillna(0.0)
+    turn = s["weights"].diff().abs().sum(axis=1).reindex(sig.index).fillna(0.0)
+    if len(_ALPHA_EVAL_CACHE) > 40:        # the final fleet is ~33 names; bound memory (signals are large)
+        _ALPHA_EVAL_CACHE.clear()
+    _ALPHA_EVAL_CACHE[name] = (sig, m, pnl, turn)
+    return _ALPHA_EVAL_CACHE[name]
+
+
+def _book_replay_compute(run, selected=None, weighting="book"):
+    """Blend several alphas into ONE traded book the same way the evolve loop does
+    (fleet.combine_signals: rank → orient by IC sign → weight by track-record ÷ turnover
+    → sum → smooth), then backtest the combined signal. Returns the combined book's
+    daily gross P&L + turnover (client applies any deposit/leverage/cost), each
+    constituent's series + metrics (for the overlay + 'vs single' stats), and the
+    pairwise P&L correlation matrix (the diversification source). Powers the
+    Combined-book view — the 'quants trade books, not single alphas' story."""
+    key = (frozenset(selected) if selected else "default", weighting)
+    if key in _BOOK_CACHE:
+        return _BOOK_CACHE[key]
+    from lab.agent.evolve import Config as _Cfg
+    cfg = _Cfg()
+    lut = _formula_lookup(run)
+    panel = _panel_for(run)
+    cost = run["meta"]["config"]["cost_bps"]
+    members = run["generations"][-1]["fleet"]          # the final live fleet
+    fam = {m["name"]: m["family"] for m in members}
+    avail = [m for m in members if m["name"] in lut]
+    cand = [n for n in selected if n in lut] if selected else [m["name"] for m in avail]
+    if not cand:
+        raise HTTPException(400, "no valid alphas selected")
+
+    sig_by, met, pnl_by, turn_by = {}, {}, {}, {}
+    for nm in cand:
+        try:
+            sig, m, pnl, turn = _eval_one(lut, panel, cost, nm)
+        except dsl.DSLError:
+            continue
+        sig_by[nm], met[nm], pnl_by[nm], turn_by[nm] = sig, m, pnl, turn
+    if not sig_by:
+        raise HTTPException(400, "no evaluable alphas in selection")
+
+    # robust-score proxy (full-sample IC-IR; no per-gen history at serve time), then
+    # rank → top-K (only when defaulting to the agent's book; an explicit basket is kept whole).
+    score = {nm: met[nm]["ic_ir"] for nm in sig_by}
+    book = ([n for n in cand if n in sig_by] if selected
+            else sorted(sig_by, key=lambda n: score[n], reverse=True)[: cfg.book_top])
+    if weighting == "equal":
+        weights = {nm: 1.0 for nm in book}
+    else:
+        weights = {nm: max(score[nm], 0.0) / (0.3 + met[nm]["turnover"]) for nm in book}
+        if not any(weights.values()):
+            weights = {nm: 1.0 for nm in book}
+    orient = {nm: (1.0 if met[nm]["ic"] >= 0 else -1.0) for nm in book}
+    combined = fleet.combine_signals({nm: sig_by[nm] for nm in book}, orient, weights,
+                                     smooth=cfg.book_smooth)
+    if combined is None:
+        raise HTTPException(400, "could not combine selection")
+    cm = backtest.evaluate_signal(combined, panel, cost_bps=cost, with_series=True)
+    cs = cm.pop("_series")
+    idx = combined.index
+    cpnl = cs["pnl"].reindex(idx).fillna(0.0)
+    cturn = cs["weights"].diff().abs().sum(axis=1).reindex(idx).fillna(0.0)
+
+    wsum = sum(weights.values()) or 1.0
+    P = pd.DataFrame({nm: pnl_by[nm] for nm in book}).corr().fillna(0.0)
+    cnames = list(P.columns)
+    off = P.where(~np.eye(len(P), dtype=bool)).values if len(P) > 1 else np.array([0.0])
+    keep = ("ic", "ic_ir", "appraisal", "sharpe", "sharpe_net", "ann_ret", "turnover", "beta")
+    out = {
+        "names": book,
+        "default_book": (None if selected else book),
+        "available": [{"name": m["name"], "family": m["family"],
+                       "ir": m["ir"], "turnover": m["turnover"]} for m in avail],
+        "weighting": weighting,
+        "dates": [str(d.date()) for d in idx],
+        "pnl": [round(float(x), 6) for x in cpnl],
+        "turn": [round(float(x), 6) for x in cturn],
+        "metrics": {k: cm[k] for k in (*keep, "appraisal_net", "ann_ret_net", "n_days")},
+        "constituents": [{
+            "name": nm, "family": fam.get(nm, "unknown"),
+            "weight": round(weights[nm] / wsum, 4), "orient": int(orient[nm]),
+            "metrics": {k: met[nm][k] for k in keep},
+            "pnl": [round(float(x), 6) for x in pnl_by[nm].reindex(idx).fillna(0.0)],
+            "turn": [round(float(x), 6) for x in turn_by[nm].reindex(idx).fillna(0.0)],
+        } for nm in book],
+        "corr": {"names": cnames, "matrix": [[round(float(P.loc[a, b]), 3) for b in cnames] for a in cnames]},
+        "avg_pair_corr": round(float(np.nanmean(off)), 3),
+        "book_top": cfg.book_top,
+        "cost_bps_default": cost,
+    }
+    if len(_BOOK_CACHE) > 8:
+        _BOOK_CACHE.clear()
+    _BOOK_CACHE[key] = out
+    return out
+
+
+@app.get("/api/book_replay")
+def book_replay(names: str | None = None, weighting: str = "book", run_id: str | None = None):
+    """Replay a COMBINED book of alphas (default = the agent's final traded book,
+    top-K by track record). Pass ?names=a,b,c to blend an arbitrary basket and
+    ?weighting=equal for an equal-weight blend instead of the engine's recipe."""
+    run, _ = _load_run(run_id)
+    selected = [s.strip() for s in (names.split(",") if names else []) if s.strip()]
+    w = "equal" if weighting == "equal" else "book"
+    return _book_replay_compute(run, selected or None, w)
+
+
 @app.get("/api/similar/{name}")
 def similar(name: str, run_id: str | None = None):
     """Atlas Vector Search (Voyage embeddings) — alphas the agent has tried that are

@@ -46,11 +46,11 @@ export default function LearningChart({ run }: { run: RunData }) {
             With memory of past wins &amp; failures, the agent discovers keepers faster than its
             memory-ablated self or random search — the core continual-learning proof.</p>
         </div>
-        <div className="flex gap-1 bg-surface2 rounded-lg p-1">
+        <div className="flex gap-1 bg-surface2 border border-border p-1">
           {(["discoveries", "quality"] as View[]).map((v) => (
             <button key={v} onClick={() => setView(v)}
-              className={`px-3 py-1 rounded-md text-xs font-medium capitalize transition ${
-                view === v ? "bg-violet/15 text-violet" : "text-muted hover:text-ink"}`}>
+              className={`px-3 py-1 text-xs font-medium capitalize transition ${
+                view === v ? "bg-violet/12 text-violet" : "text-muted hover:text-ink"}`}>
               {v === "discoveries" ? "Cumulative discoveries" : "Proposal quality (OOS)"}
             </button>
           ))}
@@ -60,11 +60,11 @@ export default function LearningChart({ run }: { run: RunData }) {
       {view === "discoveries" ? (
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={cumData} margin={{ top: 6, right: 12, bottom: 0, left: -20 }}>
-            <CartesianGrid stroke="#1e2740" strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="g" stroke="#5a6477" fontSize={11}
+            <CartesianGrid stroke="#e7eaef" strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="g" stroke="#8b95a4" fontSize={11}
               tickFormatter={(g) => cumData[g]?.date?.slice(0, 7) ?? g} />
-            <YAxis stroke="#5a6477" fontSize={11} />
-            <Tooltip contentStyle={{ background: "#0e1320", border: "1px solid #1e2740", borderRadius: 10 }}
+            <YAxis stroke="#8b95a4" fontSize={11} />
+            <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e7eaef", borderRadius: 0 }}
               labelFormatter={(g) => `Gen ${g}`}
               formatter={(v: any, n: any) => [v, ARM_META[n]?.label ?? n]} />
             <Legend formatter={(v) => ARM_META[v]?.label ?? v} wrapperStyle={{ fontSize: 12 }} />
@@ -78,13 +78,13 @@ export default function LearningChart({ run }: { run: RunData }) {
       ) : (
         <ResponsiveContainer width="100%" height={300}>
           <ScatterChart margin={{ top: 6, right: 12, bottom: 0, left: -20 }}>
-            <CartesianGrid stroke="#1e2740" strokeDasharray="3 3" />
-            <XAxis type="number" dataKey="g" name="gen" stroke="#5a6477" fontSize={11}
+            <CartesianGrid stroke="#e7eaef" strokeDasharray="3 3" />
+            <XAxis type="number" dataKey="g" name="gen" stroke="#8b95a4" fontSize={11}
               domain={[0, "dataMax"]} />
-            <YAxis type="number" dataKey="ir" name="OOS IR" stroke="#5a6477" fontSize={11} />
+            <YAxis type="number" dataKey="ir" name="OOS IR" stroke="#8b95a4" fontSize={11} />
             <ZAxis range={[40, 40]} />
-            <ReferenceLine y={0} stroke="#3a4658" />
-            <Tooltip contentStyle={{ background: "#0e1320", border: "1px solid #1e2740", borderRadius: 10 }}
+            <ReferenceLine y={0} stroke="#c7cdd8" />
+            <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #e7eaef", borderRadius: 0 }}
               formatter={(v: any, n: any) => [fmt(v), n]} />
             <Legend formatter={(v) => ARM_META[v]?.label ?? v} wrapperStyle={{ fontSize: 12 }} />
             {armKeys.map((a) => (
