@@ -1,0 +1,25 @@
+[project]
+name = "quant-alpha"
+version = "0.1.0"
+description = "Quant research lab with daily strategy demos and 5-minute cross-sectional backtesting."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "google-genai",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "pydantic",
+    "pyarrow",
+    "uvicorn[standard]",
+    "yfinance",
+]
+
+[dependency-groups]
+dev = [
+    "httpx",
+    "pytest",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

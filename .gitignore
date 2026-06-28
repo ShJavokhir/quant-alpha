@@ -13,3 +13,4 @@ frontend/.next/
 # generated runs -- but TRACK the committed replay run so the demo works offline
 runs/*
 !runs/demo_committed/
+!runs/factor_5m_demo/

@@ -144,24 +144,28 @@ A dark quant-terminal dashboard: **Research Feed / experiment ledger** (appraisa
 
 ```bash
 # 0. Python env
-python3 -m venv .venv && source .venv/bin/activate
-pip install yfinance pandas numpy matplotlib fastapi "uvicorn[standard]" google-genai pydantic
+uv sync --dev
 
 # 1. (optional) refresh data — the 15-ticker basket is already in data/
-python download_data.py SPY AAPL MSFT GOOGL AMZN NVDA META JPM XOM JNJ WMT KO PG HD DIS
+uv run python download_data.py SPY AAPL MSFT GOOGL AMZN NVDA META JPM XOM JNJ WMT KO PG HD DIS
 
 # 2. Build the committed replay run  → runs/demo_committed/{journal,ablation,holdout}
-python build_demo.py            # or --quick for a fast smoke build
+uv run python build_demo.py     # or --quick for a fast smoke build
 #    or run pieces individually:
-python research.py              # the caused demo arc (stub, no API key)
-python research.py gemini       # live Gemini brain (needs GEMINI_API_KEY in .env)
-python ablation.py              # the ablation proof
-python holdout.py               # the sealed holdout
+uv run python research.py       # the caused demo arc (stub, no API key)
+uv run python research.py gemini # live Gemini brain (needs GEMINI_API_KEY in .env)
+uv run python ablation.py       # the ablation proof
+uv run python holdout.py        # the sealed holdout
 
-# 3. Backend API  →  http://localhost:8000
-uvicorn api:app --port 8000
+# 3. 5-minute provider ingest, when you have credentials
+# Polygon: POLYGON_API_KEY=...
+# Alpaca:  ALPACA_API_KEY=... ALPACA_SECRET_KEY=...
+uv run python ingest_5m.py --provider polygon --symbols AAPL,MSFT,NVDA --start 2024-01-02 --end 2024-01-31 --universe sp500_current
 
-# 4. Dashboard    →  http://localhost:3000
+# 4. Backend API  →  http://localhost:8000
+uv run uvicorn api:app --port 8000
+
+# 5. Dashboard    →  http://localhost:3000
 cd frontend && npm install && npm run dev
 ```
 
