@@ -6,7 +6,7 @@
 > it cannot fool.
 
 #### Built on the sponsor stack — every integration is load-bearing
-[![Gemini 2.5 Flash](https://img.shields.io/badge/Gemini%202.5%20Flash-4285F4?style=flat-square&logo=googlegemini&logoColor=white)](https://ai.google.dev/gemini-api/docs)
+[![Gemini 3.5 Flash](https://img.shields.io/badge/Gemini%203.5%20Flash-4285F4?style=flat-square&logo=googlegemini&logoColor=white)](https://ai.google.dev/gemini-api/docs)
 [![Antigravity Agent](https://img.shields.io/badge/Antigravity%20Agent-6645E6?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev/gemini-api/docs/antigravity-agent)
 [![MongoDB Atlas](https://img.shields.io/badge/MongoDB%20Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-overview/)
 [![Voyage AI](https://img.shields.io/badge/Voyage%20AI-C2459A?style=flat-square)](https://www.mongodb.com/docs/voyageai/)
@@ -108,7 +108,7 @@ Every sponsor product below is **load-bearing** — pull it out and the result c
 
 | Sponsor product | What it powers in DARWIN | Read more |
 |---|---|---|
-| **Google Gemini 2.5 Flash** | the memory-conditioned alpha proposer | [docs ↗](https://ai.google.dev/gemini-api/docs) |
+| **Google Gemini 3.5 Flash** | the memory-conditioned alpha proposer | [docs ↗](https://ai.google.dev/gemini-api/docs) |
 | **Gemini Antigravity** managed agent (`antigravity-preview-05-2026`) | spins up an isolated Google-hosted box to browse the web + run code and return *cited* alphas (real DOIs, step traces, env IDs) — **live on stage** | [docs ↗](https://ai.google.dev/gemini-api/docs/antigravity-agent) |
 | **MongoDB Atlas Vector Search** | the agent's memory + idea-space "nearest alphas" — the substrate that *drives* the +119% learning lift | [docs ↗](https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-overview/) |
 | **Voyage AI** (`voyage-3.5`, 1024-d) | embeddings for memory, de-duplication, and similarity search | [docs ↗](https://www.mongodb.com/docs/voyageai/) |
