@@ -1,0 +1,162 @@
+[
+  {
+    "name": "price_momentum_12_1",
+    "family": "momentum",
+    "intuition": "Stocks that have outperformed over the past year tend to keep outperforming over the next few months as investors underreact to information; the most recent month is skipped to avoid short-term reversal contamination.",
+    "signal_description": "For each stock compute the cumulative close-to-close return from roughly 12 months ago up to 1 month ago (e.g. return over t-252 to t-21 trading days). Each day rank stocks cross-sectionally by this trailing return; go long high-momentum names and short low-momentum names.",
+    "source_title": "Returns to Buying Winners and Selling Losers: Implications for Stock Market Efficiency (Jegadeesh & Titman, 1993)",
+    "source_url": "https://www.bauer.uh.edu/rsusmel/phd/jegadeesh-titman93.pdf"
+  },
+  {
+    "name": "high_52week_proximity",
+    "family": "momentum",
+    "intuition": "Nearness to the 52-week high acts as an anchor: when a stock approaches its yearly high, traders are reluctant to bid it higher, causing underreaction, so stocks near their highs subsequently outperform those far below.",
+    "signal_description": "For each stock compute the ratio of the current close to its highest price (or highest close) over the trailing 252 trading days. Rank stocks cross-sectionally by this ratio each day; go long stocks closest to their 52-week high and short those farthest below it.",
+    "source_title": "The 52-Week High and Momentum Investing (George & Hwang, 2004)",
+    "source_url": "https://www.bauer.uh.edu/tgeorge/papers/gh4-paper.pdf"
+  },
+  {
+    "name": "moving_average_trend",
+    "family": "momentum",
+    "intuition": "Simple trend-following rules (price above a long moving average) capture persistent drift; stocks in established uptrends tend to continue, a relationship documented across decades of index data.",
+    "signal_description": "For each stock compute a short moving average of the close (e.g. 50-day) and a long moving average (e.g. 200-day). Use the signed gap (short MA minus long MA) divided by price, or simply price-minus-long-MA, as a continuous trend score. Rank stocks cross-sectionally and go long the strongest uptrends, short the strongest downtrends.",
+    "source_title": "Simple Technical Trading Rules and the Stochastic Properties of Stock Returns (Brock, Lakonishok & LeBaron, 1992)",
+    "source_url": "https://www.kevinsheppard.com/files/teaching/mfe/advanced-econometrics/Brock_Lakonishok_LeBaron.pdf"
+  },
+  {
+    "name": "short_term_reversal",
+    "family": "reversal",
+    "intuition": "Over short horizons (about one month) individual stock returns exhibit negative serial correlation, partly from liquidity provision and overreaction, so last month's losers tend to bounce and winners tend to give back gains.",
+    "signal_description": "For each stock compute the prior one-month close-to-close return (e.g. over the last ~21 trading days). Each day rank stocks cross-sectionally and go long the worst recent performers and short the best recent performers (a contrarian sort).",
+    "source_title": "Evidence of Predictable Behavior of Security Returns (Jegadeesh, 1990)",
+    "source_url": "https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1540-6261.1990.tb05110.x"
+  },
+  {
+    "name": "residual_reversal",
+    "family": "reversal",
+    "intuition": "Reversal is far stronger when measured on the portion of returns unrelated to common factors: the idiosyncratic (residual) component reverses because it largely reflects temporary, non-fundamental price pressure rather than news.",
+    "signal_description": "Estimate each stock's daily return beta to a market proxy (the equal-weighted cross-sectional average daily return) over a trailing window, then form daily residual returns. Cumulate the residuals over the past ~21 trading days. Rank cross-sectionally and go long stocks with the most negative residual run-up and short those with the most positive, betting on residual mean reversion.",
+    "source_title": "A Closer Look at the Short-Term Return Reversal (Da, Liu & Schaumburg)",
+    "source_url": "https://academicweb.nd.edu/~zda/Reversal.pdf"
+  },
+  {
+    "name": "weekly_max_reversal",
+    "family": "reversal",
+    "intuition": "Short-term reversal is concentrated in stocks that recently printed extreme single-day gains (lottery-like spikes); such stocks are overbought by attention-driven traders and subsequently reverse hard at the weekly horizon.",
+    "signal_description": "Each week, for every stock compute its prior-week return and its maximum single-day return over the prior week (MAX). Focus the reversal sort on high-MAX names: go long prior-week losers and short prior-week winners, with the strongest signal among stocks that had the largest single-day spikes.",
+    "source_title": "Maxing Out Short-term Reversals in Weekly Stock Returns (Journal of Empirical Finance, 2025)",
+    "source_url": "https://www.sciencedirect.com/science/article/abs/pii/S0927539825000301"
+  },
+  {
+    "name": "amihud_illiquidity",
+    "family": "volume",
+    "intuition": "Illiquid stocks, where a given dollar of trading moves the price more, command a return premium as compensation for higher trading costs and price-impact risk.",
+    "signal_description": "For each stock compute daily price impact as the absolute daily return divided by daily dollar volume (close * volume), then average this ratio over a trailing window (e.g. 1-12 months). Rank stocks cross-sectionally and go long high-illiquidity stocks, short the most liquid.",
+    "source_title": "Illiquidity and Stock Returns: Cross-Section and Time-Series Effects (Amihud, 2002)",
+    "source_url": "https://www.cis.upenn.edu/~mkearns/finread/amihud.pdf"
+  },
+  {
+    "name": "liquidity_dollar_volume",
+    "family": "volume",
+    "intuition": "Trading activity proxies for liquidity: more liquid, heavily traded stocks earn lower expected returns, so low-liquidity names carry a premium. With only OHLCV available, average daily dollar volume is the natural liquidity proxy for the turnover effect.",
+    "signal_description": "For each stock compute trailing average daily dollar volume (close * volume) over, e.g., the past 1-3 months and take its log. Rank stocks cross-sectionally each day and go long low dollar-volume (less liquid) stocks and short high dollar-volume (most liquid) stocks.",
+    "source_title": "Liquidity and Stock Returns: An Alternative Test (Datar, Naik & Radcliffe, 1998)",
+    "source_url": "https://www.sciencedirect.com/science/article/abs/pii/S1386418197000049"
+  },
+  {
+    "name": "abnormal_volume",
+    "family": "volume",
+    "intuition": "Spikes in trading volume relative to a stock's own norm signal shifts in investor attention and information flow; abnormal volume predicts the cross-section of subsequent returns beyond past-return effects.",
+    "signal_description": "For each stock compute recent volume (e.g. last 1-5 days average) divided by its trailing baseline volume (e.g. 20-60 day average) to get an abnormal-volume ratio. Rank stocks cross-sectionally by this ratio each day and form long-short portfolios on the high-vs-low abnormal-volume spread.",
+    "source_title": "Abnormal Trading Volume and the Cross-Section of Stock Returns (EFMA, 2016)",
+    "source_url": "https://efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2016-Switzerland/papers/EFMA2016_0415_fullpaper.pdf"
+  },
+  {
+    "name": "volume_price_trend",
+    "family": "volume",
+    "intuition": "Volume confirms price: accumulating signed volume (volume attributed in the direction of the day's price change) reveals underlying buying or selling pressure before it is fully reflected in price.",
+    "signal_description": "For each stock build a cumulative Volume-Price-Trend / On-Balance-Volume line by summing volume * daily percentage price change (or +volume on up days and -volume on down days). Use the recent slope/change of this line, normalized by trailing volume, as the score. Rank cross-sectionally and go long rising-accumulation names, short distribution names.",
+    "source_title": "Volume Price Trend Indicator (VPT) / On-Balance Volume - Investopedia reference",
+    "source_url": "https://www.investopedia.com/terms/v/vptindicator.asp"
+  },
+  {
+    "name": "idiosyncratic_vol",
+    "family": "volatility",
+    "intuition": "Stocks with high idiosyncratic (firm-specific) volatility earn abnormally low future returns, an anomaly often attributed to mispricing, lottery preferences, and limits to arbitrage.",
+    "signal_description": "For each stock regress daily returns on a market proxy (equal-weighted cross-sectional average return) over a trailing month and take the standard deviation of the residuals as idiosyncratic volatility. Rank stocks cross-sectionally and go long low-idiosyncratic-vol stocks, short high-idiosyncratic-vol stocks.",
+    "source_title": "The Cross-Section of Volatility and Expected Returns (Ang, Hodrick, Xing & Zhang, 2006)",
+    "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=681343"
+  },
+  {
+    "name": "low_total_vol",
+    "family": "volatility",
+    "intuition": "The low-volatility anomaly: stocks with low total return volatility deliver higher risk-adjusted returns than high-volatility stocks, contradicting the textbook risk-return tradeoff.",
+    "signal_description": "For each stock compute the standard deviation of daily close-to-close returns over a trailing window (e.g. 1-3 years, or shorter). Rank stocks cross-sectionally each day and go long the lowest-volatility quantile, short the highest-volatility quantile.",
+    "source_title": "The Volatility Effect: Lower Risk Without Lower Return (Blitz & van Vliet, 2007)",
+    "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=980865"
+  },
+  {
+    "name": "max_lottery",
+    "family": "volatility",
+    "intuition": "Investors overpay for lottery-like stocks with extreme recent single-day upside, pushing their prices too high; these high-MAX stocks subsequently underperform.",
+    "signal_description": "For each stock compute MAX as the maximum single daily return over the trailing month (or the average of the few largest daily returns). Rank stocks cross-sectionally and go long low-MAX stocks, short high-MAX stocks.",
+    "source_title": "Maxing Out: Stocks as Lotteries and the Cross-Section of Expected Returns (Bali, Cakici & Whitelaw, 2011)",
+    "source_url": "https://pages.stern.nyu.edu/~rwhitela/papers/max%20jfe11.pdf"
+  },
+  {
+    "name": "corwin_schultz_spread",
+    "family": "microstructure",
+    "intuition": "Daily high prices are typically buyer-initiated and lows seller-initiated, so the ratio of high to low embeds the bid-ask spread; wider implied spreads proxy illiquidity and command a return premium.",
+    "signal_description": "Estimate each stock's bid-ask spread from daily high and low prices using the Corwin-Schultz two-day high-low estimator, then average it over a trailing window. Rank stocks cross-sectionally and go long high-implied-spread (illiquid) stocks, short low-spread (liquid) stocks.",
+    "source_title": "A Simple Way to Estimate Bid-Ask Spreads from Daily High and Low Prices (Corwin & Schultz, 2012)",
+    "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1106193"
+  },
+  {
+    "name": "roll_effective_spread",
+    "family": "microstructure",
+    "intuition": "In an efficient market the bid-ask bounce induces negative serial covariance in successive price changes; the magnitude of that covariance implies the effective spread, a liquidity/transaction-cost proxy that is priced in the cross-section.",
+    "signal_description": "For each stock compute the first-order serial covariance of daily close-to-close price changes over a trailing window; the Roll spread estimate is 2*sqrt(-cov) when the covariance is negative. Rank stocks cross-sectionally by this implied spread and go long high-spread (illiquid) stocks, short low-spread (liquid) stocks.",
+    "source_title": "A Simple Implicit Measure of the Effective Bid-Ask Spread in an Efficient Market (Roll, 1984)",
+    "source_url": "https://www.bauer.uh.edu/rsusmel/phd/roll1984.pdf"
+  },
+  {
+    "name": "overnight_intraday",
+    "family": "microstructure",
+    "intuition": "Anomaly returns accrue very differently overnight versus intraday: overnight (close-to-open) returns are dominated by retail/sentiment-driven demand and persist, while intraday returns behave differently, so decomposing the two predicts the cross-section.",
+    "signal_description": "Split each stock's daily return into an overnight component (open / prior close - 1) and an intraday component (close / open - 1). Average the overnight component over a trailing window as the signal. Rank stocks cross-sectionally and form a long-short portfolio on persistent overnight performance.",
+    "source_title": "The Cross-Section of Intraday and Overnight Returns (Bogousslavsky, 2021)",
+    "source_url": "https://www.sciencedirect.com/science/article/abs/pii/S0304405X21000854"
+  },
+  {
+    "name": "intraday_close_strength",
+    "family": "microstructure",
+    "intuition": "The position of the close within the day's high-low range, and the close-versus-open move, capture intraday demand pressure; this is the basis of several short-horizon formulaic alphas built purely from OHLC bars.",
+    "signal_description": "For each stock compute an intraday strength score such as the close location value ((close - low) - (high - close)) / (high - low), or (close - open) / (high - low + epsilon). Optionally smooth over a few days. Rank stocks cross-sectionally and go long strong-close names, short weak-close names (sign can be tuned per the 101 Alphas conventions).",
+    "source_title": "101 Formulaic Alphas (Kakushadze, 2016)",
+    "source_url": "https://arxiv.org/abs/1601.00991"
+  },
+  {
+    "name": "long_term_reversal",
+    "family": "value",
+    "intuition": "Over multi-year horizons investors overreact to sustained good or bad news, so past long-run losers (which become cheap/value-like) outperform past long-run winners as prices mean-revert toward fundamentals.",
+    "signal_description": "For each stock compute the cumulative close-to-close return over a long trailing window excluding the most recent year (e.g. from t-60 months to t-13 months, or t-1260 to t-252 trading days). Rank stocks cross-sectionally and go long past long-term losers, short past long-term winners.",
+    "source_title": "Does the Stock Market Overreact? (De Bondt & Thaler, 1985)",
+    "source_url": "https://onlinelibrary.wiley.com/doi/10.1111/j.1540-6261.1985.tb05004.x"
+  },
+  {
+    "name": "month_of_year_seasonality",
+    "family": "seasonality",
+    "intuition": "Stocks that historically earn relatively high returns in a given calendar month tend to keep earning high returns in that same month for years, a persistent cross-sectional seasonal pattern.",
+    "signal_description": "For each stock and each upcoming calendar month, compute its average historical return in that same calendar month over prior years (using close-to-close monthly returns built from daily data). Rank stocks cross-sectionally by this same-month historical average and go long high-seasonal stocks, short low-seasonal stocks for that month.",
+    "source_title": "Seasonality in the Cross-Section of Stock Returns (Heston & Sadka, 2008)",
+    "source_url": "https://www.sciencedirect.com/science/article/abs/pii/S0304405X0700195X"
+  },
+  {
+    "name": "day_of_week_seasonality",
+    "family": "seasonality",
+    "intuition": "Long-short anomaly and speculative-stock returns vary systematically with the day of the week (e.g. sentiment-driven legs do better on certain weekdays), creating exploitable day-of-week patterns in the cross-section.",
+    "signal_description": "Tag each daily return with its weekday. For each stock estimate its recent average return conditional on the upcoming weekday (e.g. trailing average of Monday returns when the next session is a Monday). Rank stocks cross-sectionally by this weekday-conditional score and form long-short portfolios refreshed by day of week.",
+    "source_title": "Day of the Week and the Cross-Section of Returns (Birru)",
+    "source_url": "https://english.ckgsb.edu.cn/sites/default/files/files/Day%20of%20the%20Week%20and%20the%20Cross-Section%20of%20Returns%20-%20Birru.pdf"
+  }
+]
