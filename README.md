@@ -15,6 +15,11 @@
 
 <sub>Gemini authors the alphas · **Antigravity** researches new ones live in an isolated cloud box · **Atlas + Voyage** are the memory that *drives* the learning lift · **MiniMax-M2.5 on DigitalOcean** is the swappable reasoning proposer. Full breakdown ↓</sub>
 
+<p align="center">
+  <img src="docs/images/01-watch-it-evolve.png" alt="DARWIN dashboard — Section 01, Watch it evolve: live HUD (IC-IR, keepers discovered, live fleet, hit-rate, turnover) over a walk-forward backtest, with the book traded block by block" width="900">
+</p>
+<p align="center"><sub><b>Watch it evolve (Section 01)</b> — the live HUD tracks signal quality and discoveries as the agent walk-forwards through unseen blocks; the book trades each block while the fleet breeds and culls.</sub></p>
+
 ---
 
 ## Why this is different — read this first
@@ -117,6 +122,11 @@ Every sponsor product below is **load-bearing** — pull it out and the result c
 
 <sub>Also uses Firecrawl to gather the grounded literature corpus. Data: ~1,200 US stocks, daily OHLCV, 2010–2024 (run on a liquid top-600 universe).</sub>
 
+<p align="center">
+  <img src="docs/images/antigravity-agent.png" alt="Gemini Antigravity managed agent run — isolated sandbox provisions, browses SSRN/arXiv/Quantpedia/JFE literature, writes and runs a liquidity-tilted momentum signal, then backtests it to the DSL" width="640">
+</p>
+<p align="center"><sub><b>Antigravity managed agent, live.</b> One call spins up an isolated Google-hosted box that reads the literature, writes a cross-sectional signal, and backtests it — returning a cited alpha with a full step trace (env <code>1f066a37…</code>, 16 steps).</sub></p>
+
 ---
 
 ## Run it / what to look at
@@ -134,6 +144,11 @@ live **⚡ Propose** button (Gemini authors + backtests a new alpha on the spot)
 - **Section 03 — "the researcher is learning"**: the three-tier chart above. This is the thesis.
 - **Section 01 — the Living Fleet**: watch alphas get born, thrive, decay, and culled across 11 years.
 - **Section 05 — the honesty panel**: the sealed holdout, cost sweep, and controls.
+
+<p align="center">
+  <img src="docs/images/strategy-drilldown.png" alt="Per-alpha drill-down modal for micro_volume_reversal — formula, IC / IC-IR / appraisal / net-Sharpe / turnover, plus cumulative-IC and gross-equity charts" width="860">
+</p>
+<p align="center"><sub><b>Per-alpha drill-down.</b> Click any alpha to inspect its formula, full metric line (IC, IC-IR, appraisal, net Sharpe, turnover) and cumulative-IC / equity curves — net Sharpe shown even when negative.</sub></p>
 
 ---
 
