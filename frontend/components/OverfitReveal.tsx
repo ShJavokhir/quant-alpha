@@ -89,7 +89,7 @@ export function OverfitReveal({ iteration, ticker = "SPY" }: { iteration: number
     };
   }, [data]);
 
-  const overfit = (data?.gap ?? 0) > 0.5;
+  const overfit = data?.verdict === "OVERFIT" || (data?.appraisal_gap ?? 0) > 0.5;
 
   return (
     <div>
@@ -99,23 +99,31 @@ export function OverfitReveal({ iteration, ticker = "SPY" }: { iteration: number
           <span className="text-muted">
             {ticker} · {data.template}
           </span>
-          <span className="text-robust">IN-SAMPLE Sharpe {data.is.sharpe?.toFixed(2)}</span>
-          <span className="text-overfit">OUT-OF-SAMPLE Sharpe {data.oos.sharpe?.toFixed(2)}</span>
+          <span className="text-robust">IS alpha {data.is.appraisal?.toFixed(2)}</span>
+          <span className="text-overfit">OOS alpha {data.oos.appraisal?.toFixed(2)}</span>
           <span
             className={`ml-auto rounded px-2 py-0.5 font-bold ${
               overfit ? "bg-overfit/15 text-overfit" : "bg-robust/15 text-robust"
             }`}
           >
-            {overfit ? `OVERFIT · gap ${data.gap?.toFixed(2)}` : `HOLDS · gap ${data.gap?.toFixed(2)}`}
+            {overfit ? `OVERFIT · α-gap ${data.appraisal_gap?.toFixed(2)}` : `HOLDS · α-gap ${data.appraisal_gap?.toFixed(2)}`}
           </span>
         </div>
       )}
       <div ref={elRef} className="w-full" style={{ height: 320 }} />
       {data && (
-        <p className="mt-2 font-mono text-[11px] leading-relaxed text-muted">
-          Green = the optimizer&apos;s fitted in-sample window (params chosen here). Red = the very next
-          out-of-sample window, same params. Dashed grey = buy &amp; hold over OOS.
-        </p>
+        <div className="mt-2 space-y-1 font-mono text-[11px] leading-relaxed text-muted">
+          <p>
+            Green = the optimizer&apos;s fitted in-sample window (beta-adjusted alpha looks great). Red = the
+            very next out-of-sample window, same params (alpha evaporates). Dashed grey = buy &amp; hold.
+          </p>
+          <p>
+            <span className="text-overfit">Edge vs beta:</span> OOS Info-Ratio vs buy&amp;hold{" "}
+            <span className="text-overfit">{data.oos.excess?.toFixed(2)}</span> — passive earns Sharpe{" "}
+            <span className="text-ink">{data.benchmark_oos_sharpe?.toFixed(2)}</span>. The verdict scores the{" "}
+            <span className="text-accent">alpha after stripping that beta</span>, not the raw Sharpe.
+          </p>
+        </div>
       )}
     </div>
   );

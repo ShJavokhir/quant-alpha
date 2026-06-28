@@ -1,0 +1,320 @@
+{
+  "run_id": "demo_committed",
+  "cutoff": "2023-06-27",
+  "train_names": [
+    "SPY",
+    "AAPL",
+    "MSFT",
+    "AMZN",
+    "NVDA",
+    "META",
+    "XOM",
+    "KO",
+    "PG",
+    "HD",
+    "DIS"
+  ],
+  "held_names": [
+    "GOOGL",
+    "JPM",
+    "WMT",
+    "JNJ"
+  ],
+  "tail_from": "2023-06-27",
+  "benchmark_tail_sharpe": 0.673,
+  "out_of_time": {
+    "winner": {
+      "family": "rsi_reversion",
+      "role": "trusted",
+      "note": "the disciplined mean-reversion edge the agent converged to (ROBUST pre-cutoff)",
+      "sealed_tail": {
+        "appraisal": 0.111,
+        "excess_sharpe": -0.409,
+        "verdict": "FRAGILE",
+        "n_names": 11,
+        "n_names_positive": 6,
+        "per_ticker": {
+          "SPY": {
+            "params": {
+              "period": 7,
+              "low": 30,
+              "high": 70
+            },
+            "appraisal": -0.058
+          },
+          "AAPL": {
+            "params": {
+              "period": 7,
+              "low": 30,
+              "high": 70
+            },
+            "appraisal": 0.155
+          },
+          "MSFT": {
+            "params": {
+              "period": 14,
+              "low": 30,
+              "high": 70
+            },
+            "appraisal": -0.418
+          },
+          "AMZN": {
+            "params": {
+              "period": 21,
+              "low": 30,
+              "high": 70
+            },
+            "appraisal": 0.411
+          },
+          "NVDA": {
+            "params": {
+              "period": 7,
+              "low": 30,
+              "high": 70
+            },
+            "appraisal": 0.615
+          },
+          "META": {
+            "params": {
+              "period": 7,
+              "low": 30,
+              "high": 70
+            },
+            "appraisal": -0.09
+          },
+          "XOM": {
+            "params": {
+              "period": 7,
+              "low": 30,
+              "high": 70
+            },
+            "appraisal": 0.462
+          },
+          "KO": {
+            "params": {
+              "period": 7,
+              "low": 30,
+              "high": 70
+            },
+            "appraisal": 0.372
+          },
+          "PG": {
+            "params": {
+              "period": 7,
+              "low": 30,
+              "high": 70
+            },
+            "appraisal": 0.785
+          },
+          "HD": {
+            "params": {
+              "period": 7,
+              "low": 30,
+              "high": 70
+            },
+            "appraisal": -0.649
+          },
+          "DIS": {
+            "params": {
+              "period": 21,
+              "low": 30,
+              "high": 70
+            },
+            "appraisal": -0.362
+          }
+        }
+      },
+      "decade": {
+        "by_decade": {
+          "1960s": 0.261,
+          "1970s": 0.287,
+          "1980s": 0.276,
+          "1990s": 0.401,
+          "2000s": 0.288,
+          "2010s": 0.11,
+          "2020s": 0.153
+        },
+        "post_cutoff_appraisal": 0.229,
+        "post_cutoff_verdict": "ROBUST",
+        "post_cutoff_folds": 7
+      }
+    },
+    "rejected": {
+      "family": "multi_filter",
+      "role": "rejected",
+      "note": "the greedy multi-knob family the agent banned (OVERFIT pre-cutoff)",
+      "sealed_tail": {
+        "appraisal": -0.092,
+        "excess_sharpe": -0.606,
+        "verdict": "OVERFIT",
+        "n_names": 11,
+        "n_names_positive": 6,
+        "per_ticker": {
+          "SPY": {
+            "params": {
+              "sma_fast": 10,
+              "sma_slow": 50,
+              "rsi_period": 14,
+              "rsi_max": 70,
+              "mom_lookback": 20
+            },
+            "appraisal": 0.422
+          },
+          "AAPL": {
+            "params": {
+              "sma_fast": 5,
+              "sma_slow": 50,
+              "rsi_period": 14,
+              "rsi_max": 80,
+              "mom_lookback": 10
+            },
+            "appraisal": 0.026
+          },
+          "MSFT": {
+            "params": {
+              "sma_fast": 10,
+              "sma_slow": 50,
+              "rsi_period": 14,
+              "rsi_max": 80,
+              "mom_lookback": 10
+            },
+            "appraisal": 0.19
+          },
+          "AMZN": {
+            "params": {
+              "sma_fast": 5,
+              "sma_slow": 100,
+              "rsi_period": 14,
+              "rsi_max": 70,
+              "mom_lookback": 10
+            },
+            "appraisal": 0.107
+          },
+          "NVDA": {
+            "params": {
+              "sma_fast": 20,
+              "sma_slow": 100,
+              "rsi_period": 14,
+              "rsi_max": 80,
+              "mom_lookback": 20
+            },
+            "appraisal": -0.156
+          },
+          "META": {
+            "params": {
+              "sma_fast": 10,
+              "sma_slow": 100,
+              "rsi_period": 14,
+              "rsi_max": 60,
+              "mom_lookback": 20
+            },
+            "appraisal": -0.585
+          },
+          "XOM": {
+            "params": {
+              "sma_fast": 10,
+              "sma_slow": 50,
+              "rsi_period": 14,
+              "rsi_max": 70,
+              "mom_lookback": 20
+            },
+            "appraisal": -0.602
+          },
+          "KO": {
+            "params": {
+              "sma_fast": 20,
+              "sma_slow": 100,
+              "rsi_period": 14,
+              "rsi_max": 80,
+              "mom_lookback": 20
+            },
+            "appraisal": -0.067
+          },
+          "PG": {
+            "params": {
+              "sma_fast": 20,
+              "sma_slow": 100,
+              "rsi_period": 14,
+              "rsi_max": 70,
+              "mom_lookback": 10
+            },
+            "appraisal": -1.039
+          },
+          "HD": {
+            "params": {
+              "sma_fast": 10,
+              "sma_slow": 50,
+              "rsi_period": 14,
+              "rsi_max": 80,
+              "mom_lookback": 20
+            },
+            "appraisal": 0.154
+          },
+          "DIS": {
+            "params": {
+              "sma_fast": 20,
+              "sma_slow": 50,
+              "rsi_period": 14,
+              "rsi_max": 80,
+              "mom_lookback": 20
+            },
+            "appraisal": 0.534
+          }
+        }
+      },
+      "decade": {
+        "by_decade": {
+          "1960s": -0.456,
+          "1970s": -0.574,
+          "1980s": -0.46,
+          "1990s": -0.487,
+          "2000s": -0.264,
+          "2010s": -0.278,
+          "2020s": -0.386
+        },
+        "post_cutoff_appraisal": -0.331,
+        "post_cutoff_verdict": "OVERFIT",
+        "post_cutoff_folds": 11
+      }
+    }
+  },
+  "out_of_asset": {
+    "winner": {
+      "family": "rsi_reversion",
+      "role": "trusted",
+      "note": "the disciplined mean-reversion edge the agent converged to (ROBUST pre-cutoff)",
+      "appraisal": 0.105,
+      "excess_sharpe": -0.506,
+      "appraisal_gap": 0.194,
+      "verdict": "FRAGILE",
+      "n_folds": 79,
+      "names": [
+        "GOOGL",
+        "JPM",
+        "WMT",
+        "JNJ"
+      ],
+      "n_names_positive": 3
+    },
+    "rejected": {
+      "family": "multi_filter",
+      "role": "rejected",
+      "note": "the greedy multi-knob family the agent banned (OVERFIT pre-cutoff)",
+      "appraisal": -0.285,
+      "excess_sharpe": -0.882,
+      "appraisal_gap": 1.291,
+      "verdict": "OVERFIT",
+      "n_folds": 91,
+      "names": [
+        "GOOGL",
+        "JPM",
+        "WMT",
+        "JNJ"
+      ],
+      "n_names_positive": 0
+    }
+  },
+  "sealed_declaration": "Winner=rsi_reversion, Rejected=multi_filter committed from pre-cutoff evidence BEFORE any sealed slice was opened; each opened exactly once.",
+  "headline": "On BOTH unseen slices the trusted mean-reversion edge stays POSITIVE while the rejected greedy family stays clearly NEGATIVE. The edge is real but DECAYED (FRAGILE out-of-sample, not ROBUST) \u2014 the system downgrades rather than oversells.",
+  "proof": true
+}

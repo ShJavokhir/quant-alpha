@@ -98,6 +98,50 @@ def train_test_split(df: pd.DataFrame, train_frac: float = 0.7):
     return df.iloc[:cut], df.iloc[cut:]
 
 
+# --- benchmark-relative metrics (the verdict basis) -------------------------
+# These answer two DIFFERENT questions about a strategy vs always-long buy&hold:
+#   excess_sharpe  -- "does it beat buy&hold as a portfolio substitute?"  (Information Ratio)
+#   appraisal_ratio -- "does it carry positive timing alpha AFTER stripping market beta?"
+# On a survivor-biased, upward-drifting basket, absolute Sharpe just books market
+# beta as skill; these neutralize it. We DISPLAY excess (IR) first as the honest
+# "passive indexing wins" sanity check, then GATE the verdict on appraisal ratio.
+
+def _align(net_ret: pd.Series, bench_ret: pd.Series) -> tuple[pd.Series, pd.Series]:
+    """Date-align strategy & benchmark net returns; drop unmatched/NaN bars."""
+    a = pd.concat([net_ret, bench_ret], axis=1, keys=["s", "b"]).dropna()
+    return a["s"], a["b"]
+
+
+def excess_sharpe(net_ret: pd.Series, bench_ret: pd.Series, ann: int = ANN) -> float:
+    """Information Ratio vs buy&hold: annualized Sharpe of the active-return series
+    (strategy_net - benchmark_net). 0 by convention when the active series is flat
+    (e.g. the benchmark vs itself)."""
+    s, b = _align(net_ret, bench_ret)
+    e = s - b
+    sd = e.std()
+    if not np.isfinite(sd) or np.isclose(sd, 0.0):
+        return 0.0
+    return float(e.mean() / sd * np.sqrt(ann))
+
+
+def appraisal_ratio(net_ret: pd.Series, bench_ret: pd.Series, ann: int = ANN) -> float:
+    """Annualized appraisal ratio = Jensen alpha / residual vol, from the OLS
+    regression  strategy_net = alpha + beta*benchmark_net + residual.  This is the
+    standard 'skill beyond market beta' measure: a variable-exposure long/flat timer
+    is NOT penalized for the beta it didn't take, only credited for genuine alpha.
+    Returns NaN on too-little / degenerate data so the optimizer skips it."""
+    s, b = _align(net_ret, bench_ret)
+    if len(s) < 30 or not np.isfinite(b.std()) or np.isclose(b.std(), 0.0):
+        return np.nan
+    x, y = b.to_numpy(), s.to_numpy()
+    beta, alpha = np.polyfit(x, y, 1)            # polyfit deg-1 -> [slope, intercept]
+    resid = y - (alpha + beta * x)
+    rsd = resid.std(ddof=1)
+    if not np.isfinite(rsd) or np.isclose(rsd, 0.0):
+        return 0.0
+    return float(alpha / rsd * np.sqrt(ann))
+
+
 if __name__ == "__main__":
     import matplotlib
     matplotlib.use("Agg")

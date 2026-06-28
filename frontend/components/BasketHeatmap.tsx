@@ -13,10 +13,10 @@ export function BasketHeatmap({ exp }: { exp: Experiment }) {
         <div
           key={tk}
           className={`rounded-md ${bg(v.verdict)} px-2 py-1.5 text-center`}
-          title={`${tk}: ${v.verdict} · OOS Sharpe ${v.oos_sharpe.toFixed(2)}`}
+          title={`${tk}: ${v.verdict} · OOS appraisal ${v.oos_appraisal.toFixed(2)} · IR ${v.oos_excess_sharpe.toFixed(2)}`}
         >
           <div className="font-mono text-[11px] font-bold text-canvas">{tk}</div>
-          <div className="font-mono text-[10px] text-canvas/80">{v.oos_sharpe.toFixed(2)}</div>
+          <div className="font-mono text-[10px] text-canvas/80">{v.oos_appraisal.toFixed(2)}</div>
         </div>
       ))}
     </div>

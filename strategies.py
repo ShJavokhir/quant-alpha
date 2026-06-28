@@ -62,22 +62,33 @@ def multi_filter(df: pd.DataFrame, sma_fast: int = 20, sma_slow: int = 100,
     return (trend & not_overbought & momentum).astype(float)
 
 
-# --- the palette: name -> {fn, grid, valid?} -------------------------------
+# --- the palette: name -> {fn, grid, valid?, kind} -------------------------
+# `kind` groups templates by the KIND of edge so the routing policy can abandon a
+# failed kind and route to a different one (trend <-> mean_reversion).
 TEMPLATES = {
     "sma_crossover": {
         "fn": sma_crossover,
         "grid": {"fast": [10, 20, 50], "slow": [50, 100, 200]},
         "valid": lambda p: p["fast"] < p["slow"],
+        "kind": "trend",
     },
     "rsi_reversion": {
         "fn": rsi_reversion,
         "grid": {"period": [7, 14, 21], "low": [20, 30], "high": [70, 80]},
         "valid": lambda p: p["low"] < p["high"],
+        "kind": "mean_reversion",
     },
     "multi_filter": {
         "fn": multi_filter,
         "grid": {"sma_fast": [10, 20], "sma_slow": [50, 100], "rsi_period": [14],
                  "rsi_max": [70], "mom_lookback": [20]},
         "valid": lambda p: p["sma_fast"] < p["sma_slow"],
+        "kind": "trend",
     },
 }
+
+KINDS = {name: cfg["kind"] for name, cfg in TEMPLATES.items()}
+
+
+def families_of_kind(kind: str) -> list[str]:
+    return [name for name, k in KINDS.items() if k == kind]

@@ -1,24 +1,71 @@
 # 🧪 Quant Research Lab
 
-**An autonomous AI that discovers trading strategies — and catches itself when it overfits.**
+**An AI that learns *how to search* for trading strategies — and proves the learning generalizes.**
 
-> *The LLM proposes, the backtester disposes.*
+> *The LLM proposes; the backtester disposes; the routing policy learns which **kinds** of edges survive.*
 
-Built for the **AI Engineer World's Fair Hackathon** (Cerebral Valley, SF — June 27–28, 2026).
+Built for the **AI Engineer World's Fair Hackathon** (SF — June 27–28, 2026).
 
 ---
 
-## The idea
+## The one sentence
 
-Most "self-improving agent" demos can't actually *prove* the agent got better — the reward is subjective ("the summary reads nicer"). **Trading is the one domain with an objective, immediate, ground-truth grade on every decision: out-of-sample P&L.** That makes it the perfect testbed for *provable* continual learning.
+We did **not** build an AI that finds the best trading strategy. We built an AI that learns how to *search* for them — which *kinds* of edges survive on this market — and we can prove the learning generalizes to data the search never saw. **The strategy is the receipt; the improving research competence is the product.**
 
-So we built a lab where an **LLM acts as a quant researcher**: it proposes a parameterized strategy and a hypothesis, a **rigorous walk-forward backtester optimizes and judges it**, and a **guardrail catches overfitting** before anything is trusted. The agent reads the verdict, writes a lesson, and proposes its next idea — accumulating a research memory across experiments.
+The chart that wins is **not** the equity curve. It's the one that shows the agent getting smarter: fewer experiments to find a robust edge, and a higher-quality edge when it does.
 
-The LLM is the **researcher, orchestrator, and explainer** — *never* the price oracle. LLMs are bad price predictors and leak future knowledge about famous tickers; the deterministic backtester is the source of truth.
+---
 
-### The hero moment 🎯
+## Why trading? Because the scoreboard is incorruptible
 
-The agent gets greedy, stacks five indicators, and tunes them hard on short windows. In-sample it looks *spectacular*. Then the walk-forward guardrail tests it on the next, unseen window — and it **craters**. The system stamps it `OVERFIT` and rejects it, live, on screen. *That's* the "AI caught itself cheating" moment — and it's computed on real data, not scripted.
+Most "self-improving agent" demos can't *prove* the agent got better — the reward is subjective. **Trading has an objective, immediate, ground-truth grade: out-of-sample P&L.** That makes it the perfect testbed for *provable* continual learning. The LLM is the **researcher/explainer**, never the price oracle — the deterministic backtester is the source of truth.
+
+---
+
+## The honest scoring: appraisal ratio, not raw Sharpe
+
+This basket is **survivor-biased and upward-drifting** (AAPL→1980, SPY→1993, XOM/KO/DIS→1962). On that universe, **absolute Sharpe just books market beta as skill** — and empirically **no** simple long/flat technical strategy beats buy-and-hold risk-adjusted after costs (buy&hold Sharpe ≈ 0.7; the best "ROBUST"-looking strategies only reach 0.46–0.62).
+
+So the verdict gate runs on the **appraisal ratio** — *Jensen alpha ÷ residual vol* vs buy-and-hold, i.e. **timing alpha after stripping market beta** — and we show the **Information Ratio (excess vs buy-and-hold) FIRST** as the sanity check that passive indexing wins. The verdict label is **"beta-adjusted ROBUST," never "beats buy-and-hold."**
+
+| Metric | Question it answers | Role |
+|---|---|---|
+| **Excess / Information Ratio** | "Does it beat buy&hold as a portfolio substitute?" | shown first — the answer is *no* (honest) |
+| **Appraisal ratio** (verdict gate) | "Does it carry timing alpha *after* beta?" | the ROBUST/FRAGILE/OVERFIT gate |
+| Absolute Sharpe | (display only) | the beta we strip out |
+
+---
+
+## The hero moment 🎯
+
+The agent gets greedy: it stacks trend + RSI + momentum filters and tunes four knobs hard on a 1-year window. **In-sample its beta-adjusted alpha looks spectacular (+1.02).** Then the walk-forward guardrail scores it on the next, unseen windows — and it **craters to −0.36**. The system stamps it `OVERFIT`, **bans the family**, and — because both trend templates have now overfit — **routes to a different *kind* of edge (mean-reversion)**, which survives. *That's* "the AI caught itself cheating, understood why, and changed research direction" — computed live on real data, not scripted.
+
+---
+
+## How the loop works (a *caused* chain)
+
+1. **Propose** — a creative proposer (stub *or* Gemini) picks a strategy family + grid + windows.
+2. **Route** — `routing.py` turns past verdicts into **binding constraints**: ban OVERFIT families, tighten FRAGILE ones, abandon a kind that's exhausted and diversify. *The route is a provable function of verdicts — delete an early verdict and a later proposal changes.*
+3. **Judge** — `walkforward.py` optimizes IS, scores OOS, rolls; the IS→OOS **appraisal** decay is the overfitting signal → `ROBUST / FRAGILE / OVERFIT`.
+4. **Diagnose** — a **metric-grounded** lesson (param count, IS→OOS gap, the *dated* worst fold, per-name dispersion) is carried into the next proposal. Never a confabulated mechanism the backtester can't see.
+5. **Prove** — a controlled ablation (the policy works) and a sealed holdout (the edge generalizes).
+
+---
+
+## The proofs
+
+### Ablation — *the policy learned* (`ablation.py`)
+Two arms, identical except one knob: a seeded random-search proposer **with** vs **without** the routing policy (`memory-ON` = proposer ∩ `derive_constraints`; `memory-OFF` = proposer alone). Family order is **randomized per seed** (kills the "pre-sequenced" critique). Random-search, not the LLM, so the policy is isolated cleanly.
+
+> memory-ON reaches a ROBUST edge in **fewer experiments** *and* at **higher OOS alpha**, with separated error bars across seeds — and finds a robust edge far more often within budget. Speed **and** quality.
+
+### Holdout — *the learning generalizes* (`holdout.py`)
+The search reads only the **TRAIN** names strictly **before a cutoff**. Two sealed slices, opened once, scored on the appraisal basis:
+
+- **Out-of-time** (primary, the harder regime axis): the trusted edge stays **positive but decayed → FRAGILE**; the rejected family stays clearly negative. A decade table shows **persistent sign, decaying magnitude** (+0.40 in the '90s → +0.15 now) — the system honestly **downgrades** recent RSI rather than overselling.
+- **Out-of-asset** (clean name-generalization): scored on names *never searched* — trusted edge positive, rejected family negative on every name.
+
+**Honest headline:** the agent didn't find a strategy that beats every regime; it found a disciplined mean-reversion edge that **generalizes across unseen names and stays positive (if weakened) out-of-time**, while the greedy multi-knob family **fails both axes**.
 
 ---
 
@@ -26,9 +73,9 @@ The agent gets greedy, stacks five indicators, and tunes them hard on short wind
 
 | Theme | How we hit it |
 |---|---|
-| **Continual Learning** | A research **journal/memory** the agent builds and learns from across experiments. |
-| **The Self-Improvement Stack** | A **walk-forward eval harness** that *measures* improvement and gates every strategy with an honest verdict. |
-| **Recursive Intelligence / RSI** | A **recursive loop** — propose → test → diagnose → improve — that compounds robust ideas and discards curve-fit ones. |
+| **Continual Learning** (primary) | a research **memory** the agent learns from; diagnosis reshapes the next proposal; adapts from real-world signal (the market) with minimal intervention. |
+| **The Self-Improvement Stack** (differentiator) | the walk-forward eval harness + overfitting guardrail + sealed holdout **are** the eval/observability infra that makes the learning *provable*. |
+| **Recursive Intelligence** | gestured only — "an early form of self-directed intelligence." We touch no weights/architecture. |
 
 ---
 
@@ -36,159 +83,116 @@ The agent gets greedy, stacks five indicators, and tunes them hard on short wind
 
 ```
         ┌──────────────────────────────────────────────┐
-        │  Researcher  (Gemini brain  ·  or stub)       │
-        │  proposes:  template + parameter grid + windows│
+        │  Proposer  (Gemini 2.5 Flash  ·  or stub)     │
+        │  proposes: template + parameter grid + windows │
         └───────────────┬──────────────────────────────┘
                         │ proposal
                         ▼
         ┌──────────────────────────────────────────────┐
-        │  Walk-forward guardrail   (walkforward.py)    │
-        │  optimize on in-sample → score out-of-sample  │
-        │  → verdict  ROBUST / FRAGILE / OVERFIT         │
-        │  (the IS→OOS Sharpe gap is the overfit signal) │
+        │  Routing policy  (routing.py)                 │
+        │  past verdicts → binding constraints           │
+        │  ban OVERFIT · tighten FRAGILE · diversify kind│
         └───────────────┬──────────────────────────────┘
-                        │ result + diagnosis + lesson
+                        │ enforced proposal
                         ▼
         ┌──────────────────────────────────────────────┐
-        │  JOURNAL   runs/<id>/journal.jsonl            │
-        │  = agent memory  AND  the UI's data source    │
-        │  (stores params, not curves — recompute later)│
+        │  Walk-forward guardrail  (walkforward.py)     │
+        │  optimize IS → score OOS on the APPRAISAL ratio│
+        │  → ROBUST / FRAGILE / OVERFIT                   │
         └───────────────┬──────────────────────────────┘
-                        │ served + recomputed on demand
-                        ▼  FastAPI  (api.py, :8077)
+                        │ verdict + metric-grounded lesson
+                        ▼
         ┌──────────────────────────────────────────────┐
-        │  Next.js dashboard   (frontend/, :3007)       │
-        │  Feed · Overfit Reveal · Arc · Heatmap · Sim  │
+        │  JOURNAL  runs/<id>/journal.jsonl             │
+        │  = agent memory  AND  the UI's data source     │
+        │  + ablation.json + holdout.json                │
+        └───────────────┬──────────────────────────────┘
+                        │  served + recomputed on demand
+                        ▼  FastAPI  (api.py, :8000)
+        ┌──────────────────────────────────────────────┐
+        │  Next.js dashboard   (frontend/, :3000)       │
+        │  Ledger · Overfit Reveal · Ablation · Holdout  │
         └──────────────────────────────────────────────┘
 ```
 
-**Key design decision:** the **journal is the single source of truth** — it's simultaneously the agent's memory *and* the frontend's data feed. It stores *parameters, not curves*, so the backend can recompute any equity curve, candle series, or trade list on demand. This decouples the engine from the UI and makes the whole research run replayable.
+The **journal is the single source of truth** — simultaneously the agent's memory and the frontend's feed. It stores *parameters, not curves*, so the backend recomputes any equity/candle/trade series on demand, and the whole run is replayable.
 
 ---
 
-## What's built ✅
+## What's built
 
 ### Engine (Python)
 | File | What it does |
 |---|---|
-| `download_data.py` | Pulls clean OHLCV candles from Yahoo Finance → CSV (drops malformed rows, dedups). |
-| `data/` | **15-stock basket**, deep history (several tickers back to **1962**). |
-| `backtest.py` | Transparent, vectorized, **no-lookahead** backtester (1-bar execution shift), realistic costs, and trader-grade metrics (Sharpe, Sortino, max drawdown, profit factor, expectancy, win rate, exposure). |
-| `strategies.py` | Template registry — `sma_crossover`, `rsi_reversion`, `multi_filter` (deliberately overfit-prone). Each = `{fn, param grid, validity}`. |
-| `walkforward.py` | **The guardrail.** Rolling walk-forward optimization + overfitting detector → `ROBUST / FRAGILE / OVERFIT`. |
-| `research.py` | The research loop (propose → evaluate → diagnose → remember) + `StubResearcher` (scripted, no API key). Writes the journal. |
-| `gemini_researcher.py` | `GeminiResearcher` — the live LLM brain (google-genai, structured JSON output, validates/clamps every proposal). |
-| `api.py` | FastAPI backend: serves the journal and **recomputes** equity/candles/trades from stored params. |
+| `backtest.py` | no-lookahead vectorized backtester + costs; **appraisal ratio & Information Ratio** vs buy&hold. |
+| `strategies.py` | template registry (`sma_crossover`, `rsi_reversion`, `multi_filter`) tagged by **kind** (trend / mean_reversion). |
+| `walkforward.py` | **the guardrail** — walk-forward optimization + overfitting verdict on the **appraisal** basis. |
+| `routing.py` | **the caused-routing spine** — `derive_constraints` (policy) + `enforce` (repair/reject). |
+| `research.py` | the loop + verdict-driven `StubResearcher` + metric-grounded `diagnose` + journal v2. |
+| `gemini_researcher.py` | the live LLM brain (Gemini 2.5 Flash) with retry → fallback → cache. |
+| `ablation.py` | memory-ON vs memory-OFF controlled ablation (seeded random-search, parallel). |
+| `holdout.py` | the dual-axis sealed exam (out-of-time + out-of-asset). |
+| `build_demo.py` | assembles the committed replay run. |
+| `api.py` | FastAPI backend — serves the journal/ablation/holdout, recomputes curves. |
 
-### Frontend (`frontend/`) — Next.js 16 · React 19 · Tailwind v4 · lightweight-charts v5 · Framer Motion
-A dark quant-terminal dashboard with five panels:
-1. **Research Feed** — experiment cards stream in with hypothesis, verdict badge, diagnosis & lesson.
-2. **Overfitting Reveal** — in-sample equity *soaring* vs out-of-sample *cratering*, with the `OVERFIT` stamp.
-3. **Continual-Learning Arc** — best out-of-sample Sharpe climbing across experiments.
-4. **Basket Heatmap** — per-ticker robustness at a glance.
-5. **Trading Simulator** — candlesticks with BUY/SELL markers, strategy/ticker selectors, and a ▶ replay.
-
----
-
-## Results (real, from the engine)
-
-**Walk-forward of a standard SMA crossover across the 15-stock basket (303 folds):**
-optimizing fast/slow inflates **in-sample Sharpe to 0.80**, but it **holds at 0.46 out-of-sample** (gap 0.33) → `ROBUST`. The one short-history name (META) is flagged `FRAGILE` — exactly the small-sample caution a human quant would apply.
-
-**The stub research run — an honest arc:**
-
-| # | Strategy | In-sample | Out-of-sample | Gap | Verdict |
-|--:|----------|:---------:|:-------------:|:---:|---------|
-| 1 | SMA baseline | 0.80 | **0.46** | 0.33 | ✅ ROBUST |
-| 2 | multi_filter *(greedy, 1y windows)* | **1.12** | **0.11** | **1.01** | ❌ caught |
-| 3 | multi_filter *(corrected)* | 0.33 | 0.17 | 0.16 | ❌ still weak |
-| 4 | rsi_reversion | 0.97 | **0.62** | 0.35 | ✅ ROBUST |
-
-Best robust out-of-sample Sharpe climbs **0.46 → 0.62**. Note #3: removing the overfit didn't *rescue* the idea — it **revealed the idea was only ever curve-fit**, so the agent pivoted to a genuinely different, robust edge. Honest by construction.
-
-**The overfitting reveal, on SPY** (experiment #2's most-overfit fold): in-sample Sharpe **+1.49** → out-of-sample **−1.03** (gap **2.52**). It looked like the best strategy of all in-sample, and *lost money* live.
+### Frontend (`frontend/`) — Next.js · React · Tailwind v4 · lightweight-charts v5 · Framer Motion
+A dark quant-terminal dashboard: **Research Feed / experiment ledger** (appraisal + IR + routing decisions) · **Overfitting Reveal** (edge-vs-beta) · **Ablation** (memory-ON vs OFF, error bars) · **Sealed Holdout** (dual-axis + decade decay) · **Basket Heatmap** · **Trading Simulator**.
 
 ---
 
 ## Run it
 
 ```bash
-# 0. From the project root, set up the Python env
+# 0. Python env
 python3 -m venv .venv && source .venv/bin/activate
-pip install yfinance pandas numpy matplotlib fastapi "uvicorn[standard]" google-genai
+pip install yfinance pandas numpy matplotlib fastapi "uvicorn[standard]" google-genai pydantic
 
-# 1. (Optional) refresh the data — the 15-ticker basket is already in data/
+# 1. (optional) refresh data — the 15-ticker basket is already in data/
 python download_data.py SPY AAPL MSFT GOOGL AMZN NVDA META JPM XOM JNJ WMT KO PG HD DIS
 
-# 2. Run the research loop → writes runs/<timestamp>/journal.jsonl
-python research.py            # stub researcher (scripted demo arc, no API key)
-python research.py gemini     # live Gemini brain  (needs GEMINI_API_KEY in .env)
+# 2. Build the committed replay run  → runs/demo_committed/{journal,ablation,holdout}
+python build_demo.py            # or --quick for a fast smoke build
+#    or run pieces individually:
+python research.py              # the caused demo arc (stub, no API key)
+python research.py gemini       # live Gemini brain (needs GEMINI_API_KEY in .env)
+python ablation.py              # the ablation proof
+python holdout.py               # the sealed holdout
 
-# 3. Start the backend API  (http://localhost:8077)
-uvicorn api:app --port 8077
+# 3. Backend API  →  http://localhost:8000
+uvicorn api:app --port 8000
 
-# 4. Start the dashboard  (http://localhost:3007)
-cd frontend && npm install && npm run dev -- --port 3007
+# 4. Dashboard    →  http://localhost:3000
+cd frontend && npm install && npm run dev
 ```
 
-To use the live LLM brain, create a `.env` in the project root:
+Live LLM brain — create a `.env` in the project root:
 
 ```
-GEMINI_API_KEY=AIza...        # free key from https://aistudio.google.com/apikey
+GEMINI_API_KEY=AIza...            # free key from https://aistudio.google.com/apikey
 # GEMINI_MODEL=gemini-2.5-flash   # optional override (default)
 ```
 
 ---
 
-## Project structure
+## Claims register — say this / never that
 
-```
-quant-alpha/
-├── download_data.py      # Yahoo Finance → clean CSV
-├── data/                 # 15-ticker basket (daily OHLCV)
-├── backtest.py           # no-lookahead vectorized backtester + metrics
-├── strategies.py         # strategy template registry
-├── walkforward.py        # walk-forward optimizer + overfitting guardrail
-├── research.py           # the research loop + StubResearcher + journal
-├── gemini_researcher.py  # live Gemini brain (structured output)
-├── api.py                # FastAPI backend (serves + recomputes)
-├── runs/                 # generated research journals
-├── .env                  # GEMINI_API_KEY (gitignored)
-└── frontend/             # Next.js dashboard
-    ├── app/              # layout, page, dark theme
-    ├── components/       # Feed, OverfitReveal, Arc, Heatmap, Simulator
-    └── lib/api.ts        # typed API client
-```
+| ✅ Say | 🚫 Never say |
+|---|---|
+| "It learns which *kinds* of edges survive here." | "It found the optimal strategy." |
+| "It beats buy&hold out-of-sample in **beta-adjusted alpha**." | "It has a positive Sharpe." (mostly market beta) |
+| "Our routing policy provably speeds up *and* improves discovery (controlled ablation)." | "The ablation proves the LLM learned." (it tests the *policy*) |
+| "The model's metric-grounded diagnosis steered its next move." | "The model figured out it was a 2008 momentum regime." (the backtester scores folds; it doesn't know *why*) |
+| "We brought the backtest engine; this weekend we built the autonomous researcher that drives it." | *(silence on attribution)* |
 
 ---
 
 ## Engineering notes (why the results are trustworthy)
 
-- **No lookahead.** Positions decided at bar *t*'s close are *held* over bar *t+1* (a strict 1-bar execution shift). A signal can never trade on data it hasn't seen.
-- **Walk-forward, not a single split.** Parameters are optimized on a rolling in-sample window and scored on the *next* out-of-sample window — the same discipline a real quant uses, automated.
-- **Honest costs.** Commission + slippage charged on turnover (configurable bps).
-- **Small-sample & regime caveats are surfaced, not hidden** (e.g., META flagged on thin history).
-- **The LLM is sandboxed to proposing.** Every model output is validated and clamped (known templates, bounded parameters, capped grid size) before it touches the backtester.
-
----
-
-## Status & roadmap
-
-**Done:** data pipeline · backtester · walk-forward guardrail · research loop + journal · FastAPI backend · full 5-panel dashboard · Gemini integration (code complete & validated to the auth boundary).
-
-**In progress / next:**
-- 🔌 **Live Gemini brain** — code is ready; currently blocked by a project-level `403` on the provided key (a Workspace/account restriction). Needs a personal-account key *or* a MiniMax pivot (sponsor credits, OpenAI-compatible — drop-in).
-- 🎬 Animated bar-by-bar replay in the simulator.
-- 📊 Memory-on vs memory-off **ablation** chart (the cleanest proof of continual learning).
-- ▶️ A "run live" button to spawn one real research iteration on stage.
-
----
-
-## Tech stack
-
-**Engine:** Python · pandas · NumPy · yfinance
-**Backend:** FastAPI · uvicorn · google-genai
-**Frontend:** Next.js 16 · React 19 · TypeScript · Tailwind v4 · TradingView lightweight-charts v5 · Framer Motion
+- **No lookahead.** A signal at bar *t*'s close only touches P&L from *t+1* (`held = pos.shift(1)`).
+- **Appraisal-basis verdict.** Market beta is regressed out before judging — the survivor-biased universe can't flatter the result.
+- **Walk-forward, not a single split** — optimize on a rolling IS window, score the *next* OOS window.
+- **Honest costs** — commission + slippage on turnover.
+- **The LLM is sandboxed to proposing** — every output is validated, clamped, and bound by the routing policy before it touches the backtester; the live path degrades gracefully (retry → fallback → cache).
 
 ---
 

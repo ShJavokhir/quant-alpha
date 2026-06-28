@@ -10,5 +10,6 @@ __pycache__/
 frontend/node_modules/
 frontend/.next/
 
-# generated
-runs/
+# generated runs -- but TRACK the committed replay run so the demo works offline
+runs/*
+!runs/demo_committed/

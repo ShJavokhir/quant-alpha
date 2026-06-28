@@ -40,7 +40,12 @@ def load_ticker(tk: str) -> pd.DataFrame:
 
 
 def _runs() -> list[str]:
-    return sorted(d.name for d in RUNS_DIR.iterdir() if d.is_dir()) if RUNS_DIR.exists() else []
+    """Demo research runs = directories that contain a journal (excludes bare
+    ablation_*/holdout_* prototype dirs)."""
+    if not RUNS_DIR.exists():
+        return []
+    return sorted(d.name for d in RUNS_DIR.iterdir()
+                  if d.is_dir() and (d / "journal.jsonl").exists())
 
 
 def _resolve(run_id: str) -> str:
@@ -105,7 +110,9 @@ def _find_exp(run_id: str, iteration: int) -> dict:
 @app.get("/api/runs/{run_id}/experiments/{iteration}/overfit")
 def overfit_reveal(run_id: str, iteration: int, ticker: str = "SPY"):
     """The hero panel: pick this experiment's MOST overfit fold (biggest IS->OOS
-    gap), then return the in-sample equity (soaring) vs out-of-sample (collapsing)."""
+    APPRAISAL gap), then return in-sample equity (soaring) vs out-of-sample (collapsing)
+    vs the buy&hold benchmark -- edge-vs-beta. Numbers carry both the appraisal gate
+    (beta-adjusted alpha) and the Information Ratio (passive sanity)."""
     run_id = _resolve(run_id)
     exp = _find_exp(run_id, iteration)
     df = load_ticker(ticker)
@@ -114,7 +121,11 @@ def overfit_reveal(run_id: str, iteration: int, ticker: str = "SPY"):
     if not folds:
         raise HTTPException(422, "not enough history for this ticker/window")
 
-    fold = max(folds, key=lambda f: f["is_sharpe"] - f["oos_sharpe"])
+    # the most-overfit fold by appraisal collapse (IS alpha that evaporates OOS)
+    def _key(f):
+        g = f["is_appraisal"] - f["oos_appraisal"]
+        return g if math.isfinite(g) else -math.inf
+    fold = max(folds, key=_key)
     params = fold["params"]
     is_df = df.loc[str(fold["is_start"]):str(fold["oos_start"])]
     oos_df = df.loc[str(fold["oos_start"]):str(fold["oos_end"])]
@@ -125,13 +136,36 @@ def overfit_reveal(run_id: str, iteration: int, ticker: str = "SPY"):
     return {
         "ticker": ticker, "template": exp["template"], "iteration": iteration,
         "params": params, "verdict": exp["verdict"],
-        "is": {"sharpe": _num(fold["is_sharpe"]), "from": str(fold["is_start"]),
+        "is": {"appraisal": _num(fold["is_appraisal"]), "excess": _num(fold["is_excess"]),
+               "sharpe": _num(fold["is_sharpe"]), "from": str(fold["is_start"]),
                "curve": _equity_curve(is_df, sig(is_df))},
-        "oos": {"sharpe": _num(fold["oos_sharpe"]), "from": str(fold["oos_start"]),
+        "oos": {"appraisal": _num(fold["oos_appraisal"]), "excess": _num(fold["oos_excess"]),
+                "sharpe": _num(fold["oos_sharpe"]), "from": str(fold["oos_start"]),
                 "curve": _equity_curve(oos_df, sig(oos_df))},
         "benchmark_oos": _equity_curve(oos_df, st.buy_and_hold(oos_df)),
+        "benchmark_oos_sharpe": _num(fold["benchmark_oos_sharpe"]),
+        "appraisal_gap": _num(fold["is_appraisal"] - fold["oos_appraisal"]),
         "gap": _num(fold["is_sharpe"] - fold["oos_sharpe"]),
     }
+
+
+def _find_artifact(run_id: str, name: str) -> dict:
+    p = RUNS_DIR / _resolve(run_id) / name
+    if not p.exists():
+        raise HTTPException(404, f"no {name} for this run")
+    return json.loads(p.read_text())
+
+
+@app.get("/api/runs/{run_id}/ablation")
+def get_ablation(run_id: str):
+    """memory-ON vs memory-OFF ablation summary (Task C) -> ImprovementArc."""
+    return _find_artifact(run_id, "ablation.json")
+
+
+@app.get("/api/runs/{run_id}/holdout")
+def get_holdout(run_id: str):
+    """The sealed never-touched exam (Task B): winner vs rejected on unseen data."""
+    return _find_artifact(run_id, "holdout.json")
 
 
 @app.get("/api/simulate")
