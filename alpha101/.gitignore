@@ -1,0 +1,14 @@
+# third-party reference (no license — fetched on demand via fetch_reference.py)
+alpha101_ref.py
+
+# data & outputs
+data/
+results/
+panels.pkl
+*.pkl
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
