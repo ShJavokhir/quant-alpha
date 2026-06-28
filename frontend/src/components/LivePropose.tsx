@@ -12,45 +12,75 @@ const verdictColor: Record<string, string> = {
   promising: "#07875a", weak: "#c2820a", invalid: "#d23b36",
 };
 
+type Backend = "gemini" | "do";
+
+const BACKENDS: { id: Backend; label: string; sub: string }[] = [
+  { id: "gemini", label: "Gemini", sub: "fast" },
+  { id: "do", label: "MiniMax M2.5", sub: "on DigitalOcean · reasoning" },
+];
+
 export default function LivePropose() {
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<LiveAlpha[] | null>(null);
+  const [model, setModel] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [backend, setBackend] = useState<Backend>("gemini");
 
   async function run() {
-    setLoading(true); setErr(null); setItems(null);
+    setLoading(true); setErr(null); setItems(null); setModel(null);
     try {
-      const r = await fetch("/api/live_propose?n=4", { method: "POST" });
+      const r = await fetch(`/api/live_propose?n=4&backend=${backend}`, { method: "POST" });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
       setItems(d.proposals || []);
-    } catch (e) {
+      setModel(d.model || null);
+    } catch {
       setErr("Live endpoint needs the backend running (./run_demo.sh).");
     } finally {
       setLoading(false);
     }
   }
 
+  const busyLabel = backend === "do" ? "MiniMax is reasoning… (~60s)" : "researching…";
+
   return (
     <div className="card p-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h3 className="text-lg font-semibold text-ink">Watch it think — live</h3>
-          <p className="text-sm text-muted">Gemini authors brand-new alphas right now; we
-            backtest each one on the spot.</p>
+          <p className="text-sm text-muted">The agent authors brand-new alphas right now; we
+            backtest each one on the spot. Same loop, swappable model.</p>
         </div>
         <button onClick={run} disabled={loading}
           className="shrink-0 px-4 py-2 rounded-xl bg-cyan/15 text-cyan font-medium text-sm
                      hover:bg-cyan/25 transition glow-cyan disabled:opacity-50">
-          {loading ? "researching…" : "⚡ Propose live"}
+          {loading ? busyLabel : "⚡ Propose live"}
         </button>
       </div>
 
+      {/* model backend selector — one key, every model (DigitalOcean) */}
+      <div className="mt-3 flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-faint">model:</span>
+        {BACKENDS.map((b) => (
+          <button key={b.id} onClick={() => setBackend(b.id)} disabled={loading}
+            className={`px-2.5 py-1 rounded-lg text-xs border transition disabled:opacity-50 ${
+              backend === b.id
+                ? "border-cyan/60 bg-cyan/15 text-cyan"
+                : "border-border text-muted hover:text-ink"}`}>
+            <span className="font-medium">{b.label}</span>
+            <span className="ml-1.5 text-faint">{b.sub}</span>
+          </button>
+        ))}
+      </div>
+
       {err && <div className="text-xs text-amber mt-3">{err}</div>}
+      {model && !loading && (
+        <div className="text-xs text-faint mt-3">authored by <span className="text-muted">{model}</span></div>
+      )}
 
       <AnimatePresence>
         {items && (
-          <motion.div className="mt-4 space-y-2"
+          <motion.div className="mt-2 space-y-2"
             initial="hidden" animate="show"
             variants={{ show: { transition: { staggerChildren: 0.12 } } }}>
             {items.map((a) => (

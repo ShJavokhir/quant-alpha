@@ -360,15 +360,25 @@ def similar(name: str, run_id: str | None = None):
 
 
 @app.post("/api/live_propose")
-def live_propose(run_id: str | None = None, n: int = 4):
-    """Run the agent live: propose new alphas with Gemini, validate + backtest them now.
-    Powers the on-stage 'watch it think' moment."""
-    from lab.agent.proposer import Proposer
+def live_propose(run_id: str | None = None, n: int = 4, backend: str = "gemini"):
+    """Run the agent live: propose new alphas, validate + backtest them now.
+    Powers the on-stage 'watch it think' moment.
+
+    backend = "gemini" (default, fast) | "do" -> MiniMax-M2.5 served on
+    DigitalOcean's inference engine (a reasoning model; ~60s, same DSL gates)."""
     run, rid = _load_run(run_id)
     panel = _panel_for(run)
     cost = run["meta"]["config"]["cost_bps"]
-    props = Proposer().propose(n=max(1, min(8, n)),
-                               regime_hint="US equities, recent regime")
+    if backend == "do":
+        from lab.agent.do_proposer import DOProposer
+        proposer = DOProposer()
+        model_label = f"{config.DO_MODEL} · DigitalOcean"
+    else:
+        from lab.agent.proposer import Proposer
+        proposer = Proposer()
+        model_label = f"{config.GEMINI_MODEL} · Gemini"
+    props = proposer.propose(n=max(1, min(8, n)),
+                             regime_hint="US equities, recent regime")
     out = []
     for p in props:
         row = {"name": p["name"], "family": p["family"], "formula": p["formula"],
@@ -382,7 +392,7 @@ def live_propose(run_id: str | None = None, n: int = 4):
         except dsl.DSLError as e:
             row.update(ok=False, error=str(e)[:100], verdict="invalid")
         out.append(row)
-    return {"proposals": out}
+    return {"proposals": out, "backend": backend, "model": model_label}
 
 
 @app.post("/api/antigravity_research")

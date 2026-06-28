@@ -57,7 +57,8 @@ def _book_on(alpha_docs, panel, cfg, decision_date, eval_start, eval_end,
     if not any(weights.values()):
         weights = {n: 1.0 for n in names}
     orient = {n: (1.0 if trm_by[n]["ic"] >= 0 else -1.0) for n in names}
-    combined = fleet.combine_signals(sig_by, orient, weights, smooth=cfg.book_smooth)
+    combined = fleet.combine_signals(sig_by, orient, weights, smooth=cfg.book_smooth,
+                                     hold=cfg.book_hold)
     return _slim(backtest.evaluate_signal(combined, sub, eval_start, eval_end, cost_bps=cost_bps))
 
 
@@ -91,6 +92,8 @@ def main():
     ap.add_argument("--arms", default="adaptive,memory_off,random,frozen")
     ap.add_argument("--run-id", default=None)
     ap.add_argument("--universe", type=int, default=None)
+    ap.add_argument("--book-smooth", type=int, default=None, help="combined-book smoothing window")
+    ap.add_argument("--book-hold", type=int, default=None, help="rebalance every N days (1=daily)")
     ap.add_argument("--no-mongo", action="store_true")
     args = ap.parse_args()
 
@@ -102,6 +105,10 @@ def main():
         cfg.book_top = 12
     if args.universe:
         cfg.universe_n = args.universe
+    if args.book_smooth is not None:
+        cfg.book_smooth = args.book_smooth
+    if args.book_hold is not None:
+        cfg.book_hold = args.book_hold
 
     run_id = args.run_id or f"run_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}"
     t0 = time.time()
@@ -187,7 +194,7 @@ def main():
             "config": {k: getattr(cfg, k) for k in
                        ("train_days", "test_days", "step_days", "seeds_initial",
                         "target_fleet", "n_propose", "ir_kill", "ir_admit",
-                        "corr_kill", "dedup_emb", "cost_bps")},
+                        "corr_kill", "dedup_emb", "cost_bps", "book_smooth", "book_hold")},
             "memory_backend": backend, "wall_seconds": round(time.time() - t0, 1),
         },
         "generations": arm_records.get("adaptive", []),

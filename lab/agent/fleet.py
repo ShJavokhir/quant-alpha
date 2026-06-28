@@ -28,13 +28,15 @@ def slice_panel(panel: dict, start, end) -> dict:
     return out
 
 
-def combine_signals(signals: dict, orient: dict, weights: dict, smooth: int = 3) -> pd.DataFrame:
+def combine_signals(signals: dict, orient: dict, weights: dict, smooth: int = 3,
+                    hold: int = 1) -> pd.DataFrame:
     """Weighted, oriented average of cross-sectional ranks -> one combined signal.
 
     Each alpha's raw signal is rank-normalized across stocks (0..1), demeaned, flipped
     so its training IC is positive (orient), scaled by weight, and summed. The combined
-    signal is then lightly smoothed (trailing mean over `smooth` days) — a standard
-    turnover-reduction step that materially lifts net-of-cost performance. Applied
+    signal is then lightly smoothed (trailing mean over `smooth` days) and, if `hold` > 1,
+    rebalanced only every `hold` trading days (positions held constant in between) — both
+    standard turnover-reduction steps that materially lift net-of-cost performance. Applied
     identically to every arm so comparisons stay fair.
     """
     combined = None
@@ -47,6 +49,11 @@ def combine_signals(signals: dict, orient: dict, weights: dict, smooth: int = 3)
         combined = r if combined is None else combined.add(r, fill_value=0.0)
     if combined is not None and smooth and smooth > 1:
         combined = combined.rolling(int(smooth), min_periods=1).mean()
+    if combined is not None and hold and hold > 1:
+        # rebalance every `hold` days: keep the signal on the grid, forward-fill between
+        # (constant signal -> constant weights -> zero turnover on non-rebalance days)
+        keep = np.zeros(len(combined), dtype=bool); keep[:: int(hold)] = True
+        combined = combined.where(pd.Series(keep, index=combined.index), axis=0).ffill()
     return combined
 
 

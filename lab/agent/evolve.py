@@ -51,6 +51,7 @@ class Config:
     dedup_emb: float = 0.985     # reject only near-IDENTICAL formulas (embedding is coarse here)
     book_top: int = 25           # the TRADED book = top-K live alphas by train IR (research broad, trade best)
     book_smooth: int = 5         # trailing-mean smoothing of the combined book
+    book_hold: int = 1           # rebalance the book every N days (1=daily; >1 cuts turnover)
     cost_bps: float = 10.0
 
 
@@ -138,7 +139,7 @@ class Arm:
         if not any(weights.values()):
             weights = {n: 1.0 for n in names if n in trm_by}
         combined = fleet.combine_signals({n: sig_by[n] for n in weights}, orient, weights,
-                                         smooth=self.cfg.book_smooth)
+                                         smooth=self.cfg.book_smooth, hold=self.cfg.book_hold)
         if combined is None:
             return {k: 0.0 for k in ("ic_ir", "appraisal", "sharpe_net", "turnover", "ann_ret_net")}
         return backtest.evaluate_signal(combined, sub, start, end, cost_bps=self.cfg.cost_bps)

@@ -15,6 +15,12 @@ GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 VOYAGE_MODEL = os.environ.get("VOYAGE_MODEL", "voyage-3.5")
 EMBED_DIM = 1024
 
+# DigitalOcean Inference (OpenAI-compatible; one key, every model). The proposer
+# can author alphas through here instead of Gemini — default model is MiniMax-M2.5
+# (a reasoning model served by DO's inference engine), swappable via DO_MODEL.
+DO_BASE_URL = os.environ.get("DO_BASE_URL", "https://inference.do-ai.run/v1/")
+DO_MODEL = os.environ.get("DO_MODEL", "minimax-m2.5")
+
 _ENV_LOADED = False
 
 
