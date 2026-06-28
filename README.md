@@ -5,9 +5,6 @@
 > memory that compounds into sharper research over time** — proven against a judge
 > it cannot fool.
 
-AI Engineer World's Fair Hackathon · June 2026
-Themes: **Continual Learning** · The Self-Improvement Stack · Recursive Intelligence
-
 #### Built on the sponsor stack — every integration is load-bearing
 [![Gemini 2.5 Flash](https://img.shields.io/badge/Gemini%202.5%20Flash-4285F4?style=flat-square&logo=googlegemini&logoColor=white)](https://ai.google.dev/gemini-api/docs)
 [![Antigravity Agent](https://img.shields.io/badge/Antigravity%20Agent-6645E6?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev/gemini-api/docs/antigravity-agent)
@@ -102,19 +99,6 @@ three ways quant results lie:
   formulas run without trust; injection attempts blocked in tests).
 - **Ignoring costs** → net-of-cost gate at 10 bps, a full **cost sweep (1→50 bps)**,
   a 1-day execution-delay test, and a liquid top-600 universe.
-
----
-
-## How it maps to the three themes
-
-- **Continual Learning** *(our lead)* — the agent accumulates a vector memory of
-  every past win and failure and measurably gets better at research (**+119%**).
-  Memory is the independent variable in a clean ablation.
-- **The Self-Improvement Stack** — the eval-and-improve loop *is* the product: an
-  ungameable backtest evaluator, a trial ledger, automated pruning, cost-aware gating.
-- **Recursive Intelligence** — the system improves what does the improving: better
-  memory → better proposals → better memory — and the Antigravity agent
-  autonomously researches new building blocks.
 
 ---
 
