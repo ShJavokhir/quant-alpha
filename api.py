@@ -6,17 +6,29 @@ re-simulatable. Run:  uvicorn api:app --reload --port 8000
 """
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import json
 import math
+import numbers
 from pathlib import Path
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
 
 import strategies as st
 from backtest import compute_metrics, run_backtest
 from walkforward import optimize, walk_forward
+from backtest_5m import (
+    compute_portfolio_metrics_5m,
+    information_coefficient,
+    quantile_returns,
+    run_portfolio_backtest_5m,
+)
+from factors_5m import evaluate_factor, list_factors as list_factors_5m
+from market_data_5m import bars_to_panel, read_bar_cache, read_manifest
+from portfolio_5m import PortfolioConfig5m, weights_from_scores
 
 ROOT = Path(__file__).parent
 DATA_DIR = ROOT / "data"
@@ -201,3 +213,146 @@ def simulate(ticker: str = "SPY", template: str = "rsi_reversion", years: int = 
     return {"ticker": ticker, "template": template, "params": params,
             "metrics": {k: _num(v) for k, v in compute_metrics(bt).items()},
             "candles": candles, "equity": equity, "trades": trades}
+
+
+# --- 5-minute cross-sectional research API ----------------------------------
+
+class Portfolio5mRequest(BaseModel):
+    mode: str = "long_short"
+    top_quantile: float = 0.2
+    bottom_quantile: float = 0.2
+    weighting: str = "equal"
+    gross_exposure: float = 1.0
+    rebalance_every: int = 1
+
+
+class Backtest5mRequest(BaseModel):
+    provider: str = "polygon"
+    symbols: list[str]
+    start: str | None = None
+    end: str | None = None
+    factor_name: str = "intraday_momentum"
+    factor_params: dict = Field(default_factory=dict)
+    portfolio: Portfolio5mRequest = Field(default_factory=Portfolio5mRequest)
+    commission_bps: float = 2.0
+    slippage_bps: float = 3.0
+
+
+def _clean(v):
+    if isinstance(v, (pd.Timestamp, datetime)):
+        return v.isoformat()
+    if isinstance(v, numbers.Real):
+        return float(v) if math.isfinite(float(v)) else None
+    return v
+
+
+def _model_dict(model: BaseModel) -> dict:
+    return model.model_dump() if hasattr(model, "model_dump") else model.dict()
+
+
+def _series_points(s: pd.Series) -> list[dict]:
+    return [{"time": _clean(idx), "value": _clean(val)} for idx, val in s.items()]
+
+
+def _frame_points(df: pd.DataFrame) -> list[dict]:
+    out = []
+    for idx, row in df.iterrows():
+        rec = {"time": _clean(idx)}
+        for key, value in row.items():
+            rec[str(key)] = _clean(value)
+        out.append(rec)
+    return out
+
+
+def _backtest_5m_dir(run_id: str) -> Path:
+    if "/" in run_id or ".." in run_id:
+        raise HTTPException(400, "invalid backtest id")
+    return RUNS_DIR / "backtests_5m" / run_id
+
+
+def _read_backtest_5m_artifact(run_id: str, name: str):
+    p = _backtest_5m_dir(run_id) / name
+    if not p.exists():
+        raise HTTPException(404, f"no {name} for 5m backtest {run_id}")
+    return json.loads(p.read_text())
+
+
+@app.get("/api/factors/5m")
+def get_factors_5m():
+    return {"factors": list_factors_5m()}
+
+
+@app.post("/api/backtests/5m")
+def create_backtest_5m(req: Backtest5mRequest):
+    if not req.symbols:
+        raise HTTPException(422, "symbols are required")
+    cache_root = DATA_DIR / "cache"
+    try:
+        bars = read_bar_cache(cache_root, req.provider, req.start, req.end, req.symbols)
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    if bars.empty:
+        raise HTTPException(404, "no cached 5m bars matched the request")
+
+    panel = bars_to_panel(bars)
+    if panel.close.empty:
+        raise HTTPException(422, "cached bars contain no regular-session 5m data")
+    cfg = PortfolioConfig5m(**_model_dict(req.portfolio))
+    try:
+        scores = evaluate_factor(panel, req.factor_name, req.factor_params)
+        weights = weights_from_scores(scores, panel.tradable, cfg)
+        bt = run_portfolio_backtest_5m(panel, weights, req.commission_bps, req.slippage_bps)
+        metrics = compute_portfolio_metrics_5m(bt)
+        ic = information_coefficient(scores, panel.returns)
+        qret = quantile_returns(scores, panel.returns)
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+    run_id = datetime.now(timezone.utc).strftime("bt5m_%Y%m%d_%H%M%S_%f")
+    out = _backtest_5m_dir(run_id)
+    out.mkdir(parents=True, exist_ok=True)
+    try:
+        manifest = read_manifest(cache_root, req.provider)
+    except FileNotFoundError:
+        manifest = None
+
+    summary = {
+        "id": run_id,
+        "provider": req.provider,
+        "symbols": panel.symbols,
+        "start": _clean(panel.close.index.min()),
+        "end": _clean(panel.close.index.max()),
+        "factor": {"name": req.factor_name, "params": req.factor_params},
+        "portfolio": _model_dict(req.portfolio),
+        "metrics": {k: _clean(v) for k, v in metrics.items()},
+        "ic_mean": _clean(ic.mean()),
+        "rank_ic_mean": _clean(ic.mean()),
+        "survivorship_warning": "V1 5m research uses the requested static universe; S&P 500 current-constituent runs are survivor-biased.",
+        "manifest": manifest,
+        "artifacts": ["summary.json", "equity.json", "ic.json", "quantiles.json"],
+    }
+    (out / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True))
+    (out / "equity.json").write_text(json.dumps({"points": _series_points(bt["equity"])}, indent=2))
+    (out / "ic.json").write_text(json.dumps({"points": _series_points(ic)}, indent=2))
+    (out / "quantiles.json").write_text(json.dumps({"points": _frame_points(qret)}, indent=2))
+    return summary
+
+
+@app.get("/api/backtests/5m/{run_id}/summary")
+def get_backtest_5m_summary(run_id: str):
+    return _read_backtest_5m_artifact(run_id, "summary.json")
+
+
+@app.get("/api/backtests/5m/{run_id}/equity")
+def get_backtest_5m_equity(run_id: str):
+    return _read_backtest_5m_artifact(run_id, "equity.json")
+
+
+@app.get("/api/backtests/5m/{run_id}/ic")
+def get_backtest_5m_ic(run_id: str):
+    return _read_backtest_5m_artifact(run_id, "ic.json")
+
+
+@app.get("/api/backtests/5m/{run_id}/quantiles")
+def get_backtest_5m_quantiles(run_id: str):
+    return _read_backtest_5m_artifact(run_id, "quantiles.json")
